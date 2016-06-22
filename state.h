@@ -31,6 +31,17 @@ struct Operator {
 };*/
 
 
+typedef struct MemoryPool MemoryPool;
+struct MemoryPool {
+	void *members;
+	unsigned int nextSlot;
+	unsigned int capacity;
+	unsigned int freeCount;
+	
+	MemoryPool *next;
+	MemoryPool *prev;
+};
+
 
 
 typedef struct Token Token;
@@ -63,7 +74,10 @@ typedef struct Element Element;
 struct Element{
 	ElementType type;
 	void *data;
+	double dval;
+	long int ival;
 	MethodList *methods;
+	MemoryPool *owner;
 	
 	//Operator *operators;
 };
@@ -79,6 +93,7 @@ typedef struct Stack Stack;
 struct Stack {
 	Element *elm;
 	Stack *next;
+	unsigned int bRef;
 };
 
 

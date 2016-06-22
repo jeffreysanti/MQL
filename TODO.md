@@ -6,9 +6,10 @@
 	- PopBack PopFront
 	- SetX
 	- GetX
+* Conditional/Case Functionality
 * Sorting of vectors
 * Filtering of vectors
-* Range Operator
+* ~~Range Operator~~
 * Random Operator
 * Pipelineing (incomplete vector real time processing)
 * Database interaction
@@ -29,5 +30,13 @@
 	- logs
 	- exp
 	- trig
+* Memory Optimizations
+	- Stack Pool
+	- Vector Pool
+	- String Pool
+* String Optimization
+	- Create new String object with length field
+	- Create Common Token table for speeding up comparison
+	- Note that strcmp is a huge bottleneck, even though it is efficent
 
 	 

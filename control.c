@@ -9,14 +9,14 @@ int isSpecialCase(Token *tk){
 }
 
 int isTrue(Element *elm){
-	if(elm == NULL || elm->data == NULL){
+	if(elm == NULL){
 		return 0;
 	}
 	if(elm->type == ET_INTEGER){
-		long int val = *(long int*)elm->data;
+		long int val = elm->ival;
 		return (val == 0) ? 0 : 1;
 	}else if(elm->type == ET_DECIMAL){
-		double val = *(double*)elm->data;
+		double val = elm->dval;
 		return (val == 0) ? 0 : 1;
 	}else if(elm->type == ET_STRING){
 		char *s = (char*)elm->data;

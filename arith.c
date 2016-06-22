@@ -8,13 +8,13 @@ char *asString(Element *elm, int *needtoFree){
 	}
 	if(elm->type == ET_INTEGER){
 		char *str = malloc(24);
-		snprintf(str, 24, "%ld", *(long int*)elm->data);
+		snprintf(str, 24, "%ld", elm->ival);
 		*needtoFree = 1;
 		return str;
 	}
 	if(elm->type == ET_DECIMAL){
 		char *str = malloc(24);
-		snprintf(str, 24, "%f", *(double*)elm->data);
+		snprintf(str, 24, "%f", elm->dval);
 		*needtoFree = 1;
 		return str;
 	}
@@ -23,10 +23,10 @@ char *asString(Element *elm, int *needtoFree){
 
 double asDouble(Element *elm){
 	if(elm->type == TT_INT){
-		return (double) (*(long int*)elm->data);
+		return (double)elm->ival;
 	}
 	if(elm->type == TT_FLOAT){
-		return *(double*)elm->data;
+		return elm->dval;
 	}
 	return 0.0;
 }
@@ -93,15 +93,15 @@ Element *addTwoElements(Element *op1, Element *op2, State *s){
 	else if(op1->type == ET_DECIMAL || op2->type == ET_DECIMAL){
 		double d1 = asDouble(op1);
 		double d2 = asDouble(op2);
-		double *res = malloc(sizeof(double));
-		*res = d1 + d2;
-		push = newElement(ET_DECIMAL, (void*)res);
+		double res = d1 + d2;
+		push = newElement(ET_DECIMAL, NULL);
+		push->dval = res;
 	}else{ // both integers
-		long int i1 = *(long int*)op1->data;
-		long int i2 = *(long int*)op2->data;
-		long int *res = malloc(sizeof(long int));
-		*res = i1 + i2;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int i1 = op1->ival;
+		long int i2 = op2->ival;
+		long int res = i1 + i2;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}
 	cloneOps(push, op1);
 	cloneOps(push, op2);
@@ -157,15 +157,15 @@ Element *negateElement(Element *op1, State *s){
 		dest = strrev(dest);
 		push = newElement(ET_STRING, dest);
 	}else if(op1->type == ET_DECIMAL){
-		double d1 = *(double*)op1->data;
-		double *res = malloc(sizeof(double));
-		*res = -1*d1;
-		push = newElement(ET_DECIMAL, (void*)res);
+		double d1 = op1->dval;
+		double res = -1*d1;
+		push = newElement(ET_DECIMAL, NULL);
+		push->dval = res;
 	}else{ // integer
-		long int i1 = *(long int*)op1->data;
-		long int *res = malloc(sizeof(long int));
-		*res = -1 * i1;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int i1 = op1->ival;
+		long int res = -1 * i1;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}
 	cloneOps(push, op1);
 	return push;
@@ -232,19 +232,21 @@ Element *operateTwoElements(Element *op1, Element *op2, State *s, char op){
 	}else if(op1->type == ET_DECIMAL || op2->type == ET_DECIMAL){
 		double d1 = asDouble(op1);
 		double d2 = asDouble(op2);
-		double *res = malloc(sizeof(double));
-		if(op == '*') *res = d1 * d2;
-		if(op == '/') *res = d1 / d2;
-		if(op == '%') *res = fmod(d1, d2);
-		push = newElement(ET_DECIMAL, (void*)res);
+		double res = 0;
+		if(op == '*') res = d1 * d2;
+		if(op == '/') res = d1 / d2;
+		if(op == '%') res = fmod(d1, d2);
+		push = newElement(ET_DECIMAL, NULL);
+		push->dval = res;
 	}else{ // both integers
-		long int i1 = *(long int*)op1->data;
-		long int i2 = *(long int*)op2->data;
-		long int *res = malloc(sizeof(long int));
-		if(op == '*') *res = i1 * i2;
-		if(op == '/') *res = i1 / i2;
-		if(op == '%') *res = i1 % i2;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int i1 = op1->ival;
+		long int i2 = op2->ival;
+		long int res = 0;
+		if(op == '*') res = i1 * i2;
+		if(op == '/') res = i1 / i2;
+		if(op == '%') res = i1 % i2;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}
 	cloneOps(push, op1);
 	cloneOps(push, op2);
@@ -264,30 +266,33 @@ Element *inequality(Element *op1, Element *op2, State *s, char op){
 	}else if(op1->type == ET_STRING || op2->type == ET_STRING){
 		char *s1 = (char*)op1->data;
 		char *s2 = (char*)op2->data;
-		long int *res = malloc(sizeof(long int));
-		if(op == '>') *res = (strcasecmp(s1, s2) > 0) ? 1 : 0;
-		if(op == '}') *res = (strcasecmp(s1, s2) >= 0) ? 1 : 0;
-		if(op == '<') *res = (strcasecmp(s1, s2) < 0) ? 1 : 0;
-		if(op == '{') *res = (strcasecmp(s1, s2) <= 0) ? 1 : 0;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int res = 0;
+		if(op == '>') res = (strcasecmp(s1, s2) > 0) ? 1 : 0;
+		if(op == '}') res = (strcasecmp(s1, s2) >= 0) ? 1 : 0;
+		if(op == '<') res = (strcasecmp(s1, s2) < 0) ? 1 : 0;
+		if(op == '{') res = (strcasecmp(s1, s2) <= 0) ? 1 : 0;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}else if(op1->type == ET_DECIMAL || op2->type == ET_DECIMAL){
 		double d1 = asDouble(op1);
 		double d2 = asDouble(op2);
-		long int *res = malloc(sizeof(long int));
-		if(op == '>') *res = (d1 > d2) ? 1 : 0;
-		if(op == '}') *res = (d1 >= d2) ? 1 : 0;
-		if(op == '<') *res = (d1 < d2) ? 1 : 0;
-		if(op == '{') *res = (d1 <= d2) ? 1 : 0;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int res = 0;
+		if(op == '>') res = (d1 > d2) ? 1 : 0;
+		if(op == '}') res = (d1 >= d2) ? 1 : 0;
+		if(op == '<') res = (d1 < d2) ? 1 : 0;
+		if(op == '{') res = (d1 <= d2) ? 1 : 0;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}else{ // both integers
-		long int i1 = *(long int*)op1->data;
-		long int i2 = *(long int*)op2->data;
-		long int *res = malloc(sizeof(long int));
-		if(op == '>') *res = (i1 > i2) ? 1 : 0;
-		if(op == '}') *res = (i1 >= i2) ? 1 : 0;
-		if(op == '<') *res = (i1 < i2) ? 1 : 0;
-		if(op == '{') *res = (i1 <= i2) ? 1 : 0;
-		push = newElement(ET_INTEGER, (void*)res);
+		long int i1 = op1->ival;
+		long int i2 = op2->ival;
+		long int res = 0;
+		if(op == '>') res = (i1 > i2) ? 1 : 0;
+		if(op == '}') res = (i1 >= i2) ? 1 : 0;
+		if(op == '<') res = (i1 < i2) ? 1 : 0;
+		if(op == '{') res = (i1 <= i2) ? 1 : 0;
+		push = newElement(ET_INTEGER, NULL);
+		push->ival = res;
 	}
 	cloneOps(push, op1);
 	cloneOps(push, op2);
@@ -457,9 +462,9 @@ Token* opLTE(State* s, Token* tk){
 }
 
 Token* opNot(State* s, Token* tk){
-	long int *res = malloc(sizeof(long int));
-	*res = isTrue(stackPoll(s->stack)) ? 0 : 1;
-	Element *push = newElement(ET_INTEGER, (void*)res);
+	long int res = isTrue(stackPoll(s->stack)) ? 0 : 1;
+	Element *push = newElement(ET_INTEGER, NULL);
+	push->ival = res;
 	
 	if(stackPoll(s->stack) != NULL){
 		s->stack = stackPop(s->stack);
@@ -476,10 +481,10 @@ int equality(Element *e1, Element *e2){
 		return 0;
 	}
 	if(e1->type == ET_INTEGER){
-		return *(long int*)e1->data == *(long int*)e2->data;
+		return e1->ival == e2->ival;
 	}
 	if(e1->type == ET_DECIMAL){
-		return *(double*)e1->data == *(double*)e2->data;
+		return e1->dval == e2->dval;
 	}
 	if(e1->type == ET_STRING){
 		return strcmp((char*)e1->data, (char*)e2->data) == 0;
@@ -505,9 +510,9 @@ Token* opEqual(State* s, Token* tk){
 		return tk;
 	}
 	
-	long int *res = malloc(sizeof(long int));
-	*res = equality(op1, op2);
-	Element *push = newElement(ET_INTEGER, (void*)res);
+	long int res = equality(op1, op2);
+	Element *push = newElement(ET_INTEGER, NULL);
+	push->ival = res;
 	
 	// push result
 	s->stack = stackPush(s->stack, push);

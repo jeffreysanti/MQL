@@ -1,8 +1,13 @@
+   valgrind --tool=callgrind ./mql
+
+
 :fib dup dup 
 	0 = if . . 0 
 	else 1 = if . 1 
 	else dup 1 - fib swap 2 - fib +
 ;
+
+25 fib
 
 :count 0 ! __countx .
 	for 1 __countx + ! __countx . continue orf

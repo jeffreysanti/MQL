@@ -91,10 +91,12 @@ void init(){
 	registerArithmeticOps();
 	registerStackOps();
 	registerElementOps();
+	registerVectorOps();
 	registerMethodOps();
 	registerControlOps();
 }
 void cleanup(){
+	freeElementPool();
 	freeGlobalOps();
 	freeMethodSpace();
 }
@@ -147,6 +149,24 @@ int main(int argc, char **argv){
 			freeToken(tk);
 		free(line);
 	}
+	
+	
+	/*char *line = ":fib dup dup 	0 = if . . 0 	else 1 = if . 1 	else dup 1 - fib swap 2 - fib + ; 20 fib";
+	Token *tk = tokenize(line);
+	state = mql(state, tk);
+	if(state->invalid){
+		printf("Error: %s \n", state->errStr);
+		state->invalid = 0;
+		free(state->errStr);
+		state->errStr = NULL;
+	}
+	
+	Element *top = stackPoll(state->stack);
+	printElement(top);
+	
+	if(tk != NULL)
+		freeToken(tk);
+	*/
 	
 	freeState(state);
 	cleanup();

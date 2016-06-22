@@ -52,19 +52,25 @@ Element *popStackOrErr(State *state);
 Stack *stackPopNoFree(Stack *s);
 void registerStackOps();
 unsigned int stackSize(Stack *s);
+void stackReferenced(Stack *s);
+Element *stackMutated(Stack *s);
 
 // ELEMENT
 void freeElement(Element *elm);
+void freeElementPool();
 Token *mqlProc_Elm(State *s, Token *tk);
 Element *newElement(ElementType type, void *data);
 void printElement(Element *elm);
 Element *dupElement(Element *elm);
 void registerElementOps();
-void autoPackStack(State* s);
+void cloneOps(Element *dest, Element *src);
+
+// VECTORS
 Vector *newVector();
 void freeVector(Vector *v);
 void vectorPushBack(Vector *v, Element *e);
-void cloneOps(Element *dest, Element *src);
+void autoPackStack(State* s);
+void registerVectorOps();
 
 
 // OPS

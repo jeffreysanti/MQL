@@ -1,14 +1,15 @@
 #include "utils.h"
 
-char *dup(const char *s){
-	return strdup(s);
-}
 
 char *dupl(const char *s, const char *end){
 	char *res = malloc(end - s + 1);
 	memcpy(res, s, end-s);
 	res[end - s] = 0;
 	return res;
+}
+
+char *dup(const char *s){
+	return dupl(s, s+strlen(s));
 }
 
 char *trim(char *str){

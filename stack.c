@@ -8,6 +8,7 @@ Stack *stackPush(Stack *s, Element *elm){
 	Stack *s_new = malloc(sizeof(Stack));
 	s_new->elm = elm;
 	s_new->next = s;
+	s_new->bRef = 0;
 	return s_new;
 }
 
@@ -61,6 +62,18 @@ unsigned int stackSize(Stack *s){
 		++ ss;
 	}
 	return ss;
+}
+
+void stackReferenced(Stack *s){
+	s->bRef = 1;
+}
+
+Element *stackMutated(Stack *s){
+	if(s->bRef){
+		s->elm = dupElement(s->elm);
+		s->bRef = 0;
+	}
+	return s->elm;
 }
 
 
