@@ -1,11 +1,11 @@
 # TODO LIST
 
 * Vector Operations
-	- Count
-	- PushBack PushFront
-	- PopBack PopFront
-	- SetX
-	- GetX
+	- ~~Count~~
+	- ~~PushBack~~
+	- PopFront
+	- ~~SetX~~
+	- ~~GetX~~
 * Conditional/Case Functionality
 * Sorting of vectors
 * Filtering of vectors

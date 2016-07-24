@@ -87,5 +87,9 @@ int isTrue(Element *elm);
 void registerControlOps();
 
 
+// DRIVERS
+void driver_sqlite();
+void driverfree_sqlite();
+
 #endif
 

@@ -212,6 +212,63 @@ Token* opCount(State* s, Token* tk){
 	return tk;
 }
 
+Token* opSet(State* s, Token* tk){
+	Element *op3 = popStackOrErr(s);
+	Element *op2 = popStackOrErr(s);
+	Element *op1 = stackPoll(s->stack);
+	if(op2 == NULL || op3 == NULL){
+		return tk;
+	}
+	
+	if(op1 == NULL || op3->type != ET_INTEGER || op1->type != ET_VECTOR){
+		s->invalid = 1;
+		s->errStr = dup("Get must take form <vec> <val> <index:int> set");
+		freeElement(op1);
+		freeElement(op2);
+		freeElement(op3);
+		return tk;
+	}
+	
+	Vector *v = (Vector*)op1->data;
+	int index = op3->ival;
+	if(index > v->len || index <= 0){
+		s->invalid = 1;
+		s->errStr = dup("Set out of range");
+		freeElement(op1);
+		freeElement(op2);
+		return tk;
+	}
+	
+	// set action
+	Element *old = v->data[index - 1];
+	freeElement(old);
+	v->data[index - 1] = op2;
+	
+	freeElement(op3);
+	return tk;
+}
+
+Token* opVPush(State* s, Token* tk){
+	Element *op2 = popStackOrErr(s);
+	Element *op1 = stackPoll(s->stack);
+	if(op2 == NULL){
+		return tk;
+	}
+	
+	if(op1 == NULL || op1->type != ET_VECTOR){
+		s->invalid = 1;
+		s->errStr = dup("VPUSH must take form <vec> <val> vpush");
+		freeElement(op1);
+		freeElement(op2);
+		return tk;
+	}
+	
+	Vector *v = (Vector*)op1->data;
+	vectorPushBack(v, op2);
+	
+	return tk;
+}
+
 void registerVectorOps(){
 	registerGloablOp("[", &opVecOpen);
 	registerGloablOp("]", &opVecClose);
@@ -222,5 +279,9 @@ void registerVectorOps(){
 	registerGloablOp("get", &opGet);
 	registerGloablOp("COUNT", &opCount);
 	registerGloablOp("count", &opCount);
+	registerGloablOp("SET", &opSet);
+	registerGloablOp("set", &opSet);
+	registerGloablOp("VPUSH", &opVPush);
+	registerGloablOp("vpush", &opVPush);
 }
 

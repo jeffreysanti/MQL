@@ -94,8 +94,12 @@ void init(){
 	registerVectorOps();
 	registerMethodOps();
 	registerControlOps();
+	
+	driver_sqlite();
 }
 void cleanup(){
+	driverfree_sqlite();
+	
 	freeElementPool();
 	freeGlobalOps();
 	freeMethodSpace();
