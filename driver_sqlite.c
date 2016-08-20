@@ -28,6 +28,8 @@ Token* opSqlite(State* s, Token* tk){
 	}
 	
 	
+	
+	
 	freeElement(op1);
 	return tk;
 }

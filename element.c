@@ -78,6 +78,27 @@ void freeElementPool(){
 }
 
 
+Buffer *newBuffer(){
+	Buffer *b = malloc(sizeof(Buffer));
+	b->type = 0;
+	b->extra = NULL;
+	b->eob = 0;
+	b->next = NULL;
+	b->free = NULL;
+}
+
+void freeBuffer(Buffer *b){
+	if(b == NULL)
+		return;
+	
+	if(b->free != NULL){
+		b->free(b);
+	}
+	free(b);
+}
+
+
+
 Element *dupElement(Element *elm){
 	Element *ret = newElement(elm->type, NULL);
 	if(ret->type == ET_STRING){

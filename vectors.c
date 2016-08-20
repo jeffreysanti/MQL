@@ -118,6 +118,27 @@ Token* opVecClose(State* s, Token* tk){
 	return tk;
 }
 
+typedef struct BufferRange BufferRange;
+struct BufferRange {
+	long int next;
+	long int final;
+};
+
+Element *bufferNextRange(Buffer *b){
+	BufferRange *rng = (BufferRange*)b->extra;
+	if(rng->next > rng->final){
+		b->eob = 1;
+		return NULL;
+	}
+	Element *ret = newElement(ET_INTEGER, NULL);
+	ret->ival = rng->next ++;
+	return ret;
+}
+void bufferFreeRange(Buffer *b){
+	if(b->extra != NULL)
+		free(b->extra);
+}
+
 Token* opRange(State* s, Token* tk){
 	Element *op2 = popStackOrErr(s);
 	Element *op1 = popStackOrErr(s);
@@ -134,21 +155,16 @@ Token* opRange(State* s, Token* tk){
 		return tk;
 	}
 	
-	Vector *vec = newVector();
-	Element *push = newElement(ET_VECTOR, (void*)vec);
-	if(op1->ival < op2->ival){
-		for(int i=op1->ival; i<=op2->ival; ++i){
-			Element *e = newElement(ET_INTEGER, NULL);
-			e->ival = i;
-			vectorPushBack(vec, e);
-		}
-	}else{
-		for(int i=op1->ival; i>=op2->ival; --i){
-			Element *e = newElement(ET_INTEGER, NULL);
-			e->ival = i;
-			vectorPushBack(vec, e);
-		}
-	}
+	int start = op1->ival;
+	int final = op2->ival;
+	BufferRange *data = malloc(sizeof(BufferRange));
+	
+	Buffer *b = newBuffer();
+	b->next = &bufferNextRange;
+	b->free = &bufferFreeRange;
+	b->extra = (void*)data;
+	
+	Element *push = newElement(ET_BUFFER, (void*)b);
 	
 	// push result
 	s->stack = stackPush(s->stack, push);

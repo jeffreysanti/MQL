@@ -9,7 +9,9 @@ typedef enum {
 	ET_STRING,
 	ET_INTEGER,
 	ET_DECIMAL,
-	ET_VECTOR
+	ET_VECTOR,
+	
+	ET_BUFFER
 } ElementType;
 
 typedef enum {
@@ -87,6 +89,16 @@ struct Vector {
 	unsigned int len;
 	unsigned int alloc;
 	Element **data;
+};
+
+typedef struct Buffer Buffer;
+struct Buffer {
+	int type;
+	void *extra;
+	char eob;
+	
+	Element* (*next)(Buffer*);
+	void (*free)(Buffer*);
 };
 
 typedef struct Stack Stack;

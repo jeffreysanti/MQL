@@ -64,6 +64,8 @@ void printElement(Element *elm);
 Element *dupElement(Element *elm);
 void registerElementOps();
 void cloneOps(Element *dest, Element *src);
+Buffer *newBuffer();
+void freeBuffer(Buffer *b);
 
 // VECTORS
 Vector *newVector();
