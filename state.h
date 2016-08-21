@@ -19,6 +19,7 @@ typedef enum {
 	TT_INT,
 	TT_FLOAT,
 	TT_STRING,
+	TT_CODEBLOCK,
 	
 	TT_DEFINE
 } TokenType;
@@ -56,13 +57,13 @@ struct Token {
 typedef struct TokenDefine TokenDefine;
 struct TokenDefine {
 	char *s;
-	unsigned int mid;
+	unsigned int cbid;
 };
 
-typedef struct Method Method;
-struct Method{
+typedef struct CodeBlock CodeBlock;
+struct CodeBlock{
 	Token *start;
-	unsigned int mid;
+	unsigned int cbid;
 	int inUse;
 };
 typedef struct MethodList MethodList;

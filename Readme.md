@@ -31,7 +31,7 @@ wdist word # Returns a vector of all words
 wdist count # Returns a vector of all wordcounts
 
 # Builds an vector of word-percentusage pairs
-:wdist% 
+:wdist% {
 	wdist count sum ! __total . # Saves total of all words
 	wdist for dup [word, count __total / 100 *] 
 			:percent 2 get ; # for each row we can get percent component
@@ -39,23 +39,30 @@ wdist count # Returns a vector of all wordcounts
 		push orf
 	:percent transpose 2 get ; # get list of all percents
 	:count nop ; # not relevant
-;	
+} 
 ``` 
 
 ## Sample Code (Working Right Now)
 ```
-:fib dup dup 
-	0 = if . . 0 
-	else 1 = if . 1 
-	else dup 1 - fib swap 2 - fib +
-;
+:fib { dup dup 
+	0 = if { . . 0 }
+	else { 1 = if { . 1 }
+	else { dup 1 - fib swap 2 - fib + } }
+}
 
-:count 0 ! __countx .
+:count { 0 ! __countx .
 	for 1 __countx + ! __countx . continue orf
 	. __countx
-;
-```
+}
 
+
+: upto {
+	dup
+	0 = if 0
+	else { dup 1 - upto + }
+}
+
+```
 
 
 

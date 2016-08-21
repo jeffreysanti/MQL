@@ -15,6 +15,7 @@
 // Main
 State *mql_s(State *s, const char *str);
 State *mql(State *s, Token *tk);
+Token *mqlCodeBlock(State *s, Token *tk);
 State *newState();
 void freeState(State *s);
 Token *mql_op(State *s, Token *tk);
@@ -41,6 +42,8 @@ Token *findMethod(MethodList *ml, char *s);
 SymbolTable *newSymbolTable();
 void freeSymbolTable(SymbolTable **st);
 void addSymbol(SymbolTable **st, char *s, Element *elm);
+Token *codeBlockExecToken(int cbid);
+
 
 // STACK
 Stack *newStack();

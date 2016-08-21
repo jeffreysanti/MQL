@@ -12,7 +12,7 @@ int isWhitespace(char c){
 }
 
 int isSingleCharToken(char c){
-	return (c == ',' || c == '[' || c == ']' || c == ':' || c == ';');
+	return (c == ',' || c == '[' || c == ']' || c == ':' || c == '{' || c == '}');
 }
 
 char *formStringToken(char *sstart, Token *tok){
@@ -148,6 +148,24 @@ Token *tokenize(const char *s){
 		free(start);
 		return NULL;
 	}
+	
+	State *state = newState();
+	start = preprocessMethods(state, start);
+	freeState(state);
+	
+	/*printf("LEX DUMP---\n");
+	tok = start;
+	while(tok != NULL){
+		if(tok->type == TT_DEFINE){
+			printf(" * DEFINE\n");
+		}else if(tok->type == TT_CODEBLOCK){
+			printf(" * CB\n");
+		}else{
+			printf(" > %s \n", tok->s);
+		}
+		tok = tok->next;
+	}*/
+	
 	return start;
 }
 
@@ -157,13 +175,15 @@ int isInputComplete(Token *tk){
 	char *lastToken = "";
 	
 	while(tk != NULL){
-		if(!strcmp(tk->s, ":")){
-			++defCount;
+		if(tk->type != TT_CODEBLOCK && tk->type != TT_DEFINE){
+			if(!strcmp(tk->s, "{")){
+				++defCount;
+			}
+			else if(!strcmp(tk->s, "}")){
+				++endCount;
+			}
+			lastToken = tk->s;
 		}
-		else if(!strcmp(tk->s, ";")){
-			++endCount;
-		}
-		lastToken = tk->s;
 		
 		tk = tk->next;
 	}
@@ -179,6 +199,9 @@ void freeToken(Token *tk){
 		TokenDefine *td = (TokenDefine *)tk->s;
 		free(td->s);
 		td->s = NULL;
+	}
+	if(tk->type == TT_CODEBLOCK && tk->s != NULL){
+		tk->s = NULL; // it's just a number
 	}
 	if(tk->s != NULL)
 		free(tk->s);

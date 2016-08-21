@@ -67,22 +67,37 @@ State *mql(State *s, Token *tk){
 		s = newState();
 	}
 	
-	tk = preprocessMethods(s, tk);
-	
 	while(tk != NULL){
 		if(s->invalid)
 			return s;
 		
-		if(tk->type == TT_INT || tk->type == TT_FLOAT || tk->type == TT_STRING){
-			tk = mqlProc_Elm(s, tk);
-		}else if(tk->type == TT_DEFINE){
-			tk = mqlProc_Def(s, tk);
-		}else{
-			tk = mql_op(s, tk);
-		}
-	
+		tk = mqlCodeBlock(s, tk);
 	}
 	return s;
+}
+
+Token *mqlCodeBlock(State *s, Token *tk){
+	
+	/*if(tk->type == TT_DEFINE){
+		printf(" EXEC DEFINE\n");
+	}else if(tk->type == TT_CODEBLOCK){
+		printf(" EXEC CB (%d)\n", (int)tk->s);
+	}else{
+		printf(" EXEC %s \n", tk->s);
+	}*/
+	
+	if(tk->type == TT_CODEBLOCK){
+		Token *exec = codeBlockExecToken((int)tk->s);
+		s = mql(s, exec);
+		tk = tk->next;
+	}else if(tk->type == TT_INT || tk->type == TT_FLOAT || tk->type == TT_STRING){
+		tk = mqlProc_Elm(s, tk);
+	}else if(tk->type == TT_DEFINE){
+		tk = mqlProc_Def(s, tk);
+	}else{
+		tk = mql_op(s, tk);
+	}
+	return tk;
 }
 
 void init(){
@@ -126,8 +141,7 @@ int main(int argc, char **argv){
 		
 		
 		Token *tk = tokenize(line);
-		while(!isInputComplete(tk)){
-			freeToken(tk);
+		while(tk == NULL){ // incomplete input?
 			char *line2 = readline(" > ");
 			line = realloc(line, strlen(line) + strlen(line2) + 1 + 1);
 			strcat(line, "\n");

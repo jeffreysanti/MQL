@@ -34,72 +34,26 @@ Token* opNop(State* s, Token* tk){
 
 
 Token* opIf(State* s, Token* tk){
-	int branchTrue = isTrue(stackPoll(s->stack));
+	int truth = isTrue(stackPoll(s->stack));
 	if(stackPoll(s->stack) != NULL){
 		s->stack = stackPop(s->stack);
 	}
-
-	if(!branchTrue){
-		int level = 0;
-		while(tk != NULL){
-			if(tk->type == TT_OP && (!strcmp(tk->s, "IF") || !strcmp(tk->s, "if"))){
-				++level;
-			}
-			if(tk->type == TT_OP && level == 0 && (!strcmp(tk->s, "ELSE") || !strcmp(tk->s, "else"))){
-				tk = tk->next;
-				break;
-			}
-			if(tk->type == TT_OP && (!strcmp(tk->s, "FI") || !strcmp(tk->s, "fi"))){
-				if(level == 0){
-					return tk->next; // entire branch skipped
-				}
-				--level;
-			}
-			tk = tk->next;
-		}
+	
+	Token *branchTrue = tk;
+	Token *branchCont = branchTrue->next;
+	Token *branchFalse = NULL;
+	
+	if(branchCont->type == TT_OP && (!strcmp(branchCont->s, "ELSE") || !strcmp(branchCont->s, "else"))){
+		branchFalse = branchCont->next;
+		branchCont = branchCont->next->next;
 	}
 	
-	// now execute until we reach the else or fi 
-	while(tk != NULL){
-		if(s->invalid)
-			return tk;
-		
-		if(tk->type == TT_OP && (!strcmp(tk->s, "FI") || !strcmp(tk->s, "fi"))){
-			return tk->next;
-		}
-		if(tk->type == TT_OP && (!strcmp(tk->s, "ELSE") || !strcmp(tk->s, "else"))){
-			tk = tk->next;
-			int level = 0;
-			while(tk != NULL){
-				if(tk->type == TT_OP && (!strcmp(tk->s, "IF") || !strcmp(tk->s, "if"))){
-					++level;
-				}
-				if(tk->type == TT_OP && (!strcmp(tk->s, "FI") || !strcmp(tk->s, "fi"))){
-					if(level == 0){
-						return tk->next;
-					}
-					--level;
-				}
-				tk = tk->next;
-			}
-		}
-		
-		if(tk == NULL){
-			return tk;
-		}
-		
-		if(isSpecialCase(tk)){
-			return tk;
-		}
-		if(tk->type == TT_INT || tk->type == TT_FLOAT || tk->type == TT_STRING){
-			tk = mqlProc_Elm(s, tk);
-		}else if(tk->type == TT_DEFINE){
-			tk = mqlProc_Def(s, tk);
-		}else{
-			tk = mql_op(s, tk);
-		}
+	if(truth){
+		mqlCodeBlock(s, branchTrue);
+	}else if(branchFalse != NULL){
+		mqlCodeBlock(s, branchFalse);
 	}
-	return tk;
+	return branchCont;
 }
 
 Token* opFor(State* s, Token* tk){
