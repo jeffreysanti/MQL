@@ -77,14 +77,9 @@ State *mql(State *s, Token *tk){
 }
 
 Token *mqlCodeBlock(State *s, Token *tk){
-	
-	/*if(tk->type == TT_DEFINE){
-		printf(" EXEC DEFINE\n");
-	}else if(tk->type == TT_CODEBLOCK){
-		printf(" EXEC CB (%d)\n", (int)tk->s);
-	}else{
-		printf(" EXEC %s \n", tk->s);
-	}*/
+	if(tk == NULL){
+		return tk;
+	}
 	
 	if(tk->type == TT_CODEBLOCK){
 		Token *exec = codeBlockExecToken((int)tk->s);

@@ -45,7 +45,7 @@ void vectorPushBack(Vector *v, Element *e){
 // if a vector element is on the stack does nothing
 // otherwise autopack all elements on stack into
 // a vector on the stack
-void autoPackStack(State* s){
+/*void autoPackStack(State* s){
 	Element *top = stackPoll(s->stack);
 	if(top == NULL){
 		top = newElement(ET_VECTOR, (void*)newVector());
@@ -68,7 +68,7 @@ void autoPackStack(State* s){
 		v->data[i] = e;
 		s->stack = stackPopNoFree(s->stack);
 	}
-}
+}*/
 
 Token* opVecOpen(State* s, Token* tk){
 	Element *velm = newElement(ET_VECTOR, (void*)newVector());
@@ -118,6 +118,7 @@ Token* opVecClose(State* s, Token* tk){
 	return tk;
 }
 
+/*
 typedef struct BufferRange BufferRange;
 struct BufferRange {
 	long int next;
@@ -172,7 +173,7 @@ Token* opRange(State* s, Token* tk){
 	freeElement(op1);
 	freeElement(op2);
 	return tk;
-}
+}*/
 
 Token* opGet(State* s, Token* tk){
 	Element *op2 = popStackOrErr(s);
@@ -191,7 +192,7 @@ Token* opGet(State* s, Token* tk){
 	
 	Vector *v = (Vector*)op1->data;
 	int index = op2->ival;
-	if(index > v->len || index <= 0){
+	if(index >= v->len || index < 0){
 		s->invalid = 1;
 		s->errStr = dup("Get out of range");
 		freeElement(op1);
@@ -200,7 +201,7 @@ Token* opGet(State* s, Token* tk){
 	}
 	
 	// push result
-	Element *push = dupElement(v->data[index - 1]);
+	Element *push = dupElement(v->data[index]);
 	s->stack = stackPush(s->stack, push);
 	
 	freeElement(op2);
@@ -247,57 +248,37 @@ Token* opSet(State* s, Token* tk){
 	
 	Vector *v = (Vector*)op1->data;
 	int index = op3->ival;
-	if(index > v->len || index <= 0){
+	if(index > v->len || index < 0){
 		s->invalid = 1;
 		s->errStr = dup("Set out of range");
 		freeElement(op1);
 		freeElement(op2);
 		return tk;
 	}
-	
-	// set action
-	Element *old = v->data[index - 1];
-	freeElement(old);
-	v->data[index - 1] = op2;
+	if(index == v->len){ // it's a push command
+		vectorPushBack(v, op2);
+	}else{
+		Element *old = v->data[index - 1];
+		freeElement(old);
+		v->data[index] = op2;
+	}
 	
 	freeElement(op3);
 	return tk;
 }
 
-Token* opVPush(State* s, Token* tk){
-	Element *op2 = popStackOrErr(s);
-	Element *op1 = stackPoll(s->stack);
-	if(op2 == NULL){
-		return tk;
-	}
-	
-	if(op1 == NULL || op1->type != ET_VECTOR){
-		s->invalid = 1;
-		s->errStr = dup("VPUSH must take form <vec> <val> vpush");
-		freeElement(op1);
-		freeElement(op2);
-		return tk;
-	}
-	
-	Vector *v = (Vector*)op1->data;
-	vectorPushBack(v, op2);
-	
-	return tk;
-}
 
 void registerVectorOps(){
 	registerGloablOp("[", &opVecOpen);
 	registerGloablOp("]", &opVecClose);
 	registerGloablOp(",", &opVecPack);
-	registerGloablOp("RANGE", &opRange);
-	registerGloablOp("range", &opRange);
+	//registerGloablOp("RANGE", &opRange);
+	//registerGloablOp("range", &opRange);
 	registerGloablOp("GET", &opGet);
 	registerGloablOp("get", &opGet);
 	registerGloablOp("COUNT", &opCount);
 	registerGloablOp("count", &opCount);
 	registerGloablOp("SET", &opSet);
 	registerGloablOp("set", &opSet);
-	registerGloablOp("VPUSH", &opVPush);
-	registerGloablOp("vpush", &opVPush);
 }
 

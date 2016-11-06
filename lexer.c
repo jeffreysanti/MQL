@@ -172,22 +172,27 @@ Token *tokenize(const char *s){
 int isInputComplete(Token *tk){
 	int defCount = 0;
 	int endCount = 0;
+	int vdefCount = 0;
+	int vendCount = 0;
 	char *lastToken = "";
 	
 	while(tk != NULL){
 		if(tk->type != TT_CODEBLOCK && tk->type != TT_DEFINE){
 			if(!strcmp(tk->s, "{")){
 				++defCount;
-			}
-			else if(!strcmp(tk->s, "}")){
+			}else if(!strcmp(tk->s, "}")){
 				++endCount;
+			}else if(!strcmp(tk->s, "[")){
+				++vdefCount;
+			}else if(!strcmp(tk->s, "]")){
+				++vendCount;
 			}
 			lastToken = tk->s;
 		}
 		
 		tk = tk->next;
 	}
-	if(defCount != endCount || !strcmp(lastToken, "\\"))
+	if(defCount != endCount || vdefCount != vendCount || !strcmp(lastToken, "\\"))
 		return 0;
 	return 1;
 }

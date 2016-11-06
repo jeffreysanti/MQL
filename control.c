@@ -43,7 +43,7 @@ Token* opIf(State* s, Token* tk){
 	Token *branchCont = branchTrue->next;
 	Token *branchFalse = NULL;
 	
-	if(branchCont->type == TT_OP && (!strcmp(branchCont->s, "ELSE") || !strcmp(branchCont->s, "else"))){
+	if(branchCont != NULL && branchCont->next != NULL && branchCont->type == TT_OP && (!strcmp(branchCont->s, "ELSE") || !strcmp(branchCont->s, "else"))){
 		branchFalse = branchCont->next;
 		branchCont = branchCont->next->next;
 	}
@@ -56,6 +56,7 @@ Token* opIf(State* s, Token* tk){
 	return branchCont;
 }
 
+/*
 Token* opFor(State* s, Token* tk){
 	autoPackStack(s);
 	Element *top = stackPoll(s->stack);
@@ -120,7 +121,8 @@ Token* opFor(State* s, Token* tk){
 		tk = tk->next;
 	}
 	return tk;
-}
+}*/
+
 
 
 
@@ -129,7 +131,7 @@ void registerControlOps(){
 	registerGloablOp("if", &opIf);
 	registerGloablOp("NOP", &opNop);
 	registerGloablOp("nop", &opNop);
-	registerGloablOp("FOR", &opFor);
-	registerGloablOp("for", &opFor);
+	//registerGloablOp("FOR", &opFor);
+	//registerGloablOp("for", &opFor);
 }
 

@@ -77,6 +77,8 @@ void vectorPushBack(Vector *v, Element *e);
 void autoPackStack(State* s);
 void registerVectorOps();
 
+// Buffers
+Element *asBuffer(Element *e);
 
 // OPS
 void registerGloablOp(char *s, Token* (*func)(State*, Token*));

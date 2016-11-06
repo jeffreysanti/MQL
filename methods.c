@@ -61,7 +61,6 @@ void addMethod(MethodList **ml, char *s, unsigned int mid){
 	HASH_FIND_STR(*ml, s, ent);
 	if(ent != NULL){
 		freeMethodListEntry(ml, ent);
-		HASH_DEL(*ml, ent);
 	}
 	ent = malloc(sizeof(MethodList));
 	ent->name = s;
@@ -168,6 +167,27 @@ Token* preprocessMethodsAux(State* s, Token* tk, unsigned int level, unsigned in
 	//if(tk != NULL) printf("preprocessMethodsAux : tk: %s level: %d\n", tk->s, level); 
 	Token *root = tk;
 	while(tk != NULL){
+		
+		// we want vector blocks to be encapsolated in code blocks automatically
+		if(tk->type == TT_OP && !strcmp(tk->s, "[")){
+			Token *tkCBInside = malloc(sizeof(Token));
+			tkCBInside->next = tk->next;
+			tk->next = tkCBInside;
+			tkCBInside->s = dup("[[");
+			tkCBInside->type = TT_OP;
+			tk->type = TT_OP;
+			free(tk->s);
+			tk->s = dup("{");
+		}else if(tk->type == TT_OP && !strcmp(tk->s, "]")){
+			Token *tkCBEnd = malloc(sizeof(Token));
+			tkCBEnd->next = tk->next;
+			tk->next = tkCBEnd;
+			tkCBEnd->type = TT_OP;
+			tk->type = TT_OP;
+			tkCBEnd->s = dup("}");
+		}
+		
+		
 		if(tk->type == TT_OP && !strcmp(tk->s, ":")){
 			Token *tkName = tk->next;
 			if(tkName == NULL || tkName->type != TT_OP){
@@ -223,6 +243,11 @@ Token* preprocessMethodsAux(State* s, Token* tk, unsigned int level, unsigned in
 			tk->s = dup("nop");
 			return tkCont;
 		}else{
+			if(tk->type == TT_OP && !strcmp(tk->s, "[[")){
+				free(tk->s);
+				tk->s = dup("[");
+			}
+			
 			tk = tk->next;
 		}
 	}

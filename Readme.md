@@ -44,7 +44,7 @@ wdist count # Returns a vector of all wordcounts
 
 ## Sample Code (Working Right Now)
 ```
-:fib { dup dup 
+: fib { dup dup 
 	0 = if { . . 0 }
 	else { 1 = if { . 1 }
 	else { dup 1 - fib swap 2 - fib + } }
