@@ -378,6 +378,11 @@ Token* opBang(State* s, Token* tk){
 	}
 	
 	Element *op = stackPoll(s->stack);
+	if(op->type == ET_BUFFER){
+		s->invalid = 1;
+		s->errStr = dup("! Cannot store a buffer");
+		return tk;
+	}
 	if(op != NULL){
 		op = dupElement(op);
 	}

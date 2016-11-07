@@ -67,7 +67,6 @@ Element *newElement(ElementType type, void *data){
 	elm->type = type;
 	elm->data = data;
 	elm->dval = 0;
-	elm->ival = 0;
 	elm->methods = newMethodList();
 	elm->owner = pool_elm;
 	return elm;
@@ -78,13 +77,38 @@ void freeElementPool(){
 }
 
 
-Buffer *newBuffer(){
+Buffer *newBufferOriginal(){
 	Buffer *b = malloc(sizeof(Buffer));
 	b->type = 0;
 	b->extra = NULL;
 	b->eob = 0;
 	b->next = NULL;
 	b->free = NULL;
+	b->sourceBuffer1 = NULL;
+	b->sourceBuffer2 = NULL;
+	b->firstBuffer = NULL;
+	b->syncCounter = 0;
+	b->lastData = NULL;
+	return b;
+}
+
+Buffer *newBufferWithSource(Buffer *src1, Buffer *src2){
+	Buffer *b = malloc(sizeof(Buffer));
+	b->type = 0;
+	b->extra = NULL;
+	b->eob = 0;
+	b->next = NULL;
+	b->free = NULL;
+	b->sourceBuffer1 = src1;
+	b->sourceBuffer2 = src2;
+	if(src1->firstBuffer == NULL){
+		b->firstBuffer = src1;
+	}else{
+		b->firstBuffer = src1->firstBuffer;
+	}
+	b->syncCounter = 0;
+	b->lastData = NULL;
+	return b;
 }
 
 void freeBuffer(Buffer *b){
@@ -103,9 +127,8 @@ Element *dupElement(Element *elm){
 	Element *ret = newElement(elm->type, NULL);
 	if(ret->type == ET_STRING){
 		ret->data = (void*)dup((char*)elm->data);
-	}else if(ret->type == ET_INTEGER || ret->type == ET_DECIMAL){
+	}else if(ret->type == ET_NUMBER ){
 		ret->dval = elm->dval;
-		ret->ival = elm->ival;
 	}else if(ret->type == ET_VECTOR){
 		Vector *v = (Vector*)elm->data;
 		Vector *vnew = newVector();
@@ -113,6 +136,9 @@ Element *dupElement(Element *elm){
 			vectorPushBack(vnew, dupElement(v->data[i]));
 		}
 		ret->data = (void*)vnew;
+	}else if(ret->type == ET_BUFFER){
+		printf("TODO: BUF DUP!\n");
+		return NULL;
 	}
 	
 	cloneOps(ret, elm);
@@ -122,13 +148,9 @@ Element *dupElement(Element *elm){
 Token *mqlProc_Elm(State *s, Token *tk){
 	Element *elm = NULL;
 	
-	if(tk->type == TT_INT){
-		long int x = strtol(tk->s, NULL, 0);
-		elm = newElement(ET_INTEGER, NULL);
-		elm->ival = x;
-	}else if(tk->type == TT_FLOAT){
+	if(tk->type == TT_NUMBER){
 		double x = strtod(tk->s, NULL);
-		elm = newElement(ET_DECIMAL, NULL);
+		elm = newElement(ET_NUMBER, NULL);
 		elm->dval = x;
 	}else if(tk->type == TT_STRING){
 		elm = newElement(ET_STRING, (void*)dup(tk->s));
@@ -143,9 +165,7 @@ Token *mqlProc_Elm(State *s, Token *tk){
 void printElement(Element *elm){
 	if(elm == NULL){
 		printf("( NULL )\n");
-	}else if(elm->type == ET_INTEGER){
-		printf("%ld \n", elm->ival);
-	}else if(elm->type == ET_DECIMAL){
+	}else if(elm->type == ET_NUMBER){
 		printf("%f \n", elm->dval);
 	}else if(elm->type == ET_STRING){
 		printf("'%s' \n", (char*)elm->data);
@@ -157,6 +177,8 @@ void printElement(Element *elm){
 			printElement(v->data[i]);
 		}
 		printf(">\n");
+	}else if(elm->type == ET_BUFFER){
+		printf(" [ BUFFER ] \n");
 	}else{
 		printf(" [ ??? ] \n");
 	}

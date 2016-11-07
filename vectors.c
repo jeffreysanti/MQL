@@ -95,6 +95,10 @@ Token* opVecPack(State* s, Token* tk){
 	Element *op = stackPoll(s->stack);
 	if(op == NULL){ // push an empty vector
 		op = newElement(ET_VECTOR, (void*)newVector());
+	}else if(op->type == ET_BUFFER){
+		s->invalid = 1;
+		s->errStr = dup("Cannot pack a buffer into a vector");
+		return tk;
 	}else{
 		s->stack = stackPopNoFree(s->stack);
 	}
@@ -118,22 +122,22 @@ Token* opVecClose(State* s, Token* tk){
 	return tk;
 }
 
-/*
+
 typedef struct BufferRange BufferRange;
 struct BufferRange {
 	long int next;
 	long int final;
 };
 
-Element *bufferNextRange(Buffer *b){
+void bufferNextRange(Buffer *b){
 	BufferRange *rng = (BufferRange*)b->extra;
 	if(rng->next > rng->final){
 		b->eob = 1;
-		return NULL;
+		b->lastData = NULL;
+		return;
 	}
-	Element *ret = newElement(ET_INTEGER, NULL);
-	ret->ival = rng->next ++;
-	return ret;
+	b->lastData = newElement(ET_NUMBER, NULL);
+	b->lastData->dval = rng->next ++;
 }
 void bufferFreeRange(Buffer *b){
 	if(b->extra != NULL)
@@ -148,7 +152,7 @@ Token* opRange(State* s, Token* tk){
 		return tk;
 	}
 	
-	if(op2->type != ET_INTEGER || op1->type != ET_INTEGER){
+	if(op2->type != ET_NUMBER || op1->type != ET_NUMBER){
 		s->invalid = 1;
 		s->errStr = dup("Range must take 2 ints");
 		freeElement(op1);
@@ -156,11 +160,11 @@ Token* opRange(State* s, Token* tk){
 		return tk;
 	}
 	
-	int start = op1->ival;
-	int final = op2->ival;
 	BufferRange *data = malloc(sizeof(BufferRange));
+	data->next = op1->dval;
+	data->final = op2->dval;
 	
-	Buffer *b = newBuffer();
+	Buffer *b = newBufferOriginal();
 	b->next = &bufferNextRange;
 	b->free = &bufferFreeRange;
 	b->extra = (void*)data;
@@ -173,7 +177,7 @@ Token* opRange(State* s, Token* tk){
 	freeElement(op1);
 	freeElement(op2);
 	return tk;
-}*/
+}
 
 Token* opGet(State* s, Token* tk){
 	Element *op2 = popStackOrErr(s);
@@ -182,7 +186,7 @@ Token* opGet(State* s, Token* tk){
 		return tk;
 	}
 	
-	if(op1 == NULL || op2->type != ET_INTEGER || op1->type != ET_VECTOR){
+	if(op1 == NULL || op2->type != ET_NUMBER || op1->type != ET_VECTOR){
 		s->invalid = 1;
 		s->errStr = dup("Get must take form <vec> <index:int> get");
 		freeElement(op1);
@@ -191,7 +195,7 @@ Token* opGet(State* s, Token* tk){
 	}
 	
 	Vector *v = (Vector*)op1->data;
-	int index = op2->ival;
+	int index = op2->dval;
 	if(index >= v->len || index < 0){
 		s->invalid = 1;
 		s->errStr = dup("Get out of range");
@@ -222,8 +226,8 @@ Token* opCount(State* s, Token* tk){
 	}
 	
 	Vector *v = (Vector*)op1->data;
-	Element *push = newElement(ET_INTEGER, NULL);
-	push->ival = v->len;
+	Element *push = newElement(ET_NUMBER, NULL);
+	push->dval = v->len;
 	s->stack = stackPush(s->stack, push);
 	
 	return tk;
@@ -237,7 +241,7 @@ Token* opSet(State* s, Token* tk){
 		return tk;
 	}
 	
-	if(op1 == NULL || op3->type != ET_INTEGER || op1->type != ET_VECTOR){
+	if(op1 == NULL || op3->type != ET_NUMBER || op1->type != ET_VECTOR){
 		s->invalid = 1;
 		s->errStr = dup("Get must take form <vec> <val> <index:int> set");
 		freeElement(op1);
@@ -247,7 +251,7 @@ Token* opSet(State* s, Token* tk){
 	}
 	
 	Vector *v = (Vector*)op1->data;
-	int index = op3->ival;
+	int index = op3->dval;
 	if(index > v->len || index < 0){
 		s->invalid = 1;
 		s->errStr = dup("Set out of range");
@@ -272,8 +276,8 @@ void registerVectorOps(){
 	registerGloablOp("[", &opVecOpen);
 	registerGloablOp("]", &opVecClose);
 	registerGloablOp(",", &opVecPack);
-	//registerGloablOp("RANGE", &opRange);
-	//registerGloablOp("range", &opRange);
+	registerGloablOp("RANGE", &opRange);
+	registerGloablOp("range", &opRange);
 	registerGloablOp("GET", &opGet);
 	registerGloablOp("get", &opGet);
 	registerGloablOp("COUNT", &opCount);

@@ -67,7 +67,8 @@ void printElement(Element *elm);
 Element *dupElement(Element *elm);
 void registerElementOps();
 void cloneOps(Element *dest, Element *src);
-Buffer *newBuffer();
+Buffer *newBufferOriginal();
+Buffer *newBufferWithSource(Buffer *src1, Buffer *src2);
 void freeBuffer(Buffer *b);
 
 // VECTORS
@@ -78,7 +79,11 @@ void autoPackStack(State* s);
 void registerVectorOps();
 
 // Buffers
-Element *asBuffer(Element *e);
+Vector *vectorFromBuffer(Buffer *buf);
+Buffer *bufferFromVector(Vector *vec);
+Element *advanceBuffer(Buffer *buf);
+Element *getBufferData(Buffer *buf);
+void registerBufferOps();
 
 // OPS
 void registerGloablOp(char *s, Token* (*func)(State*, Token*));

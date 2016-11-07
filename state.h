@@ -7,8 +7,7 @@
 
 typedef enum {
 	ET_STRING,
-	ET_INTEGER,
-	ET_DECIMAL,
+	ET_NUMBER,
 	ET_VECTOR,
 	
 	ET_BUFFER
@@ -16,8 +15,7 @@ typedef enum {
 
 typedef enum {
 	TT_OP,
-	TT_INT,
-	TT_FLOAT,
+	TT_NUMBER,
 	TT_STRING,
 	TT_CODEBLOCK,
 	
@@ -78,7 +76,6 @@ struct Element{
 	ElementType type;
 	void *data;
 	double dval;
-	long int ival;
 	MethodList *methods;
 	MemoryPool *owner;
 	
@@ -97,8 +94,14 @@ struct Buffer {
 	int type;
 	void *extra;
 	char eob;
+	Buffer *sourceBuffer1; // where this buffer pulls data from
+	Buffer *sourceBuffer2; // where this buffer pulls data from
+	Buffer *firstBuffer; // original source of data
 	
-	Element* (*next)(Buffer*);
+	Element *lastData;
+	unsigned int syncCounter;
+	
+	void (*next)(Buffer*);
 	void (*free)(Buffer*);
 };
 

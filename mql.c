@@ -85,7 +85,7 @@ Token *mqlCodeBlock(State *s, Token *tk){
 		Token *exec = codeBlockExecToken((int)tk->s);
 		s = mql(s, exec);
 		tk = tk->next;
-	}else if(tk->type == TT_INT || tk->type == TT_FLOAT || tk->type == TT_STRING){
+	}else if(tk->type == TT_NUMBER || tk->type == TT_STRING){
 		tk = mqlProc_Elm(s, tk);
 	}else if(tk->type == TT_DEFINE){
 		tk = mqlProc_Def(s, tk);
@@ -104,6 +104,7 @@ void init(){
 	registerVectorOps();
 	registerMethodOps();
 	registerControlOps();
+	registerBufferOps();
 	
 	driver_sqlite();
 }

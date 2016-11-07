@@ -12,10 +12,7 @@ int isTrue(Element *elm){
 	if(elm == NULL){
 		return 0;
 	}
-	if(elm->type == ET_INTEGER){
-		long int val = elm->ival;
-		return (val == 0) ? 0 : 1;
-	}else if(elm->type == ET_DECIMAL){
+	if(elm->type == ET_NUMBER){
 		double val = elm->dval;
 		return (val == 0) ? 0 : 1;
 	}else if(elm->type == ET_STRING){
@@ -34,7 +31,7 @@ Token* opNop(State* s, Token* tk){
 
 
 Token* opIf(State* s, Token* tk){
-	int truth = isTrue(stackPoll(s->stack));
+	/*int truth = isTrue(stackPoll(s->stack));
 	if(stackPoll(s->stack) != NULL){
 		s->stack = stackPop(s->stack);
 	}
@@ -54,6 +51,8 @@ Token* opIf(State* s, Token* tk){
 		mqlCodeBlock(s, branchFalse);
 	}
 	return branchCont;
+	*/
+	return tk;
 }
 
 /*

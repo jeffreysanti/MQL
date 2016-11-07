@@ -31,18 +31,13 @@ char *formStringToken(char *sstart, Token *tok){
 }
 
 char *formNumericToken(char *sstart, Token *tok){
-	tok->type = TT_INT;
+	tok->type = TT_NUMBER;
 	int sawDecimal = (sstart[0] == '.');
-	if(sawDecimal){
-		tok->type = TT_FLOAT;
-	}
 	char *s = sstart + 1;
 	while(!isWhitespace(s[0]) && s[0] != 0 && !isSingleCharToken(s[0])){
 		if(s[0] == '.'){
 			if(sawDecimal){
 				tok->type = TT_OP; // error not number
-			}else{
-				tok->type = TT_FLOAT;
 			}
 		}
 		else if(!isNumber(s[0])){
