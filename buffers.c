@@ -40,7 +40,7 @@ Buffer *bufferFromVector(Vector *vec){
 }
 
 Token* opVectorize(State* s, Token* tk){
-	Element *op1 = stackPoll(s->stack);
+	Element *op1 = popStackOrErr(s);
 	if(op1 == NULL || op1->type != ET_BUFFER){
 		s->invalid = 1;
 		s->errStr = dup("Vectorize must take a buffer as input");
@@ -57,7 +57,7 @@ Token* opVectorize(State* s, Token* tk){
 }
 
 Token* opBufferize(State* s, Token* tk){
-	Element *op1 = stackPoll(s->stack);
+	Element *op1 = popStackOrErr(s);
 	if(op1 == NULL || op1->type != ET_VECTOR){
 		s->invalid = 1;
 		s->errStr = dup("Bufferize must take a vector as input");
@@ -114,6 +114,30 @@ Element *getBufferData(Buffer *buf){
 		buf->syncCounter ++;
 	}
 	return buf->lastData;
+}
+
+void bufferNextDup(Buffer *b){
+	if(b->lastData != NULL){
+		freeElement(b->lastData);
+	}
+	b->lastData = dupElement(getBufferData(b->sourceBuffer1));
+	b->eob = b->sourceBuffer1->eob;
+}
+
+Buffer *dupBuffer(Buffer *buf){
+	Buffer *b = newBufferWithSource(buf, NULL);
+	b->next = &bufferNextDup;
+	return b;
+}
+
+int commonBufferLineage(Buffer *b1, Buffer *b2){
+	if(b1->firstBuffer == NULL && b2->firstBuffer == NULL){
+		return 0;
+	}
+	if(b1->firstBuffer == b2 || b2->firstBuffer == b1){
+		return 1;
+	}
+	return b1->firstBuffer == b2->firstBuffer;
 }
 
 void registerBufferOps(){

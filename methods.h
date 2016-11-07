@@ -83,7 +83,9 @@ Vector *vectorFromBuffer(Buffer *buf);
 Buffer *bufferFromVector(Vector *vec);
 Element *advanceBuffer(Buffer *buf);
 Element *getBufferData(Buffer *buf);
+Buffer *dupBuffer(Buffer *buf);
 void registerBufferOps();
+int commonBufferLineage(Buffer *b1, Buffer *b2);
 
 // OPS
 void registerGloablOp(char *s, Token* (*func)(State*, Token*));

@@ -100,6 +100,7 @@ struct Buffer {
 	
 	Element *lastData;
 	unsigned int syncCounter;
+	unsigned int refCounter;
 	
 	void (*next)(Buffer*);
 	void (*free)(Buffer*);

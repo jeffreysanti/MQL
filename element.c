@@ -89,6 +89,7 @@ Buffer *newBufferOriginal(){
 	b->firstBuffer = NULL;
 	b->syncCounter = 0;
 	b->lastData = NULL;
+	b->refCounter = 1;
 	return b;
 }
 
@@ -100,7 +101,14 @@ Buffer *newBufferWithSource(Buffer *src1, Buffer *src2){
 	b->next = NULL;
 	b->free = NULL;
 	b->sourceBuffer1 = src1;
-	b->sourceBuffer2 = src2;
+	b->sourceBuffer1->refCounter ++;
+	if(src2 != NULL){
+		b->sourceBuffer2 = src2;
+		b->sourceBuffer2->refCounter ++;
+	}else{
+		b->sourceBuffer2 = NULL;
+	}
+	b->refCounter = 1;
 	if(src1->firstBuffer == NULL){
 		b->firstBuffer = src1;
 	}else{
@@ -112,6 +120,23 @@ Buffer *newBufferWithSource(Buffer *src1, Buffer *src2){
 }
 
 void freeBuffer(Buffer *b){
+	b->refCounter --;
+	if(b->refCounter > 0){
+		return;
+	}
+	if(b->sourceBuffer1 != NULL){
+		b->sourceBuffer1->refCounter --;
+		if(b->sourceBuffer1->refCounter <= 0){
+			freeBuffer(b->sourceBuffer1);
+		}
+	}
+	if(b->sourceBuffer2 != NULL){
+		b->sourceBuffer2->refCounter --;
+		if(b->sourceBuffer2->refCounter <= 0){
+			freeBuffer(b->sourceBuffer2);
+		}
+	}
+	
 	if(b == NULL)
 		return;
 	
@@ -124,6 +149,9 @@ void freeBuffer(Buffer *b){
 
 
 Element *dupElement(Element *elm){
+	if(elm == NULL){
+		return NULL;
+	}
 	Element *ret = newElement(elm->type, NULL);
 	if(ret->type == ET_STRING){
 		ret->data = (void*)dup((char*)elm->data);
@@ -137,8 +165,8 @@ Element *dupElement(Element *elm){
 		}
 		ret->data = (void*)vnew;
 	}else if(ret->type == ET_BUFFER){
-		printf("TODO: BUF DUP!\n");
-		return NULL;
+		Buffer *b = (Buffer*)elm->data;
+		ret->data = (void*)dupBuffer(b);
 	}
 	
 	cloneOps(ret, elm);

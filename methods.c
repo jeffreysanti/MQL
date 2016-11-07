@@ -136,6 +136,9 @@ void addSymbol(SymbolTable **st, char *s, Element *elm){
 }
 
 void cloneOps(Element *dest, Element *src){
+	if(src == NULL){
+		return;
+	}
 	MethodList *tmp = NULL, *ent = NULL;
 	HASH_ITER(hh, src->methods, ent, tmp) {
 		addMethod(&dest->methods, ent->name, ent->mid);
@@ -159,6 +162,7 @@ void formCodeBlock(State* s, Token* tk, unsigned int level, unsigned int *mid){
 	*mid = cb->cbid;
 	
 	tk->type = TT_CODEBLOCK;
+	free(tk->s); // free the "{" symbol
 	tk->s = (char*) cb->cbid;
 	tk->next = tkContinue;
 }
