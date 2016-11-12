@@ -30,10 +30,101 @@ Token* opNop(State* s, Token* tk){
 }
 
 
+
+typedef struct BufferIf BufferIf;
+struct BufferIf {
+	Token *branchTrue;
+	Token *branchFalse;
+	Buffer *bcond;
+	Buffer *biterate;
+};
+
+void bufferNextIf(State* s, Buffer *b){
+	while(1){
+		BufferIf *data = (BufferIf*)b->extra;
+		Element *cond = advanceBuffer(s, data->bcond);
+		
+		if(data->biterate != NULL){
+			if(!commonBufferLineage(data->bcond, data->biterate)){
+				advanceBuffer(s, data->biterate);
+			}
+			
+			Element *econd = getBufferData(s, data->bcond);
+			Element *eiterate = getBufferData(s, data->biterate);
+			if(data->bcond->eob || data->bcond->eob){
+				b->eob = 1;
+				b->lastData = NULL;
+				return;
+			}
+			
+			// Use a clean stack inside conditional code blocks
+			Stack *oldStack = s->stack;
+			
+			s->stack = newStack();
+			s->stack = stackPush(s->stack, eiterate);
+			int truth = isTrue(cond);
+			freeElement(cond);
+			if(truth){
+				mqlCodeBlock(s, data->branchTrue);
+			}else if(data->branchFalse != NULL){
+				mqlCodeBlock(s, data->branchFalse);
+			}
+			b->lastData = stackPoll(s->stack);
+			s->stack = stackPopNoFree(s->stack);
+			s->stack = stackPopAll(s->stack);
+			
+			// restore old stack
+			s->stack = oldStack;
+		}else{
+			Element *econd = getBufferData(s, data->bcond);
+			if(data->bcond->eob){
+				b->eob = 1;
+				b->lastData = NULL;
+				return;
+			}
+			
+			// Use a clean stack inside conditional code blocks
+			Stack *oldStack = s->stack;
+			
+			s->stack = newStack();
+			int truth = isTrue(cond);
+			freeElement(cond);
+			if(truth){
+				mqlCodeBlock(s, data->branchTrue);
+			}else if(data->branchFalse != NULL){
+				mqlCodeBlock(s, data->branchFalse);
+			}
+			b->lastData = stackPoll(s->stack);
+			s->stack = stackPopNoFree(s->stack);
+			s->stack = stackPopAll(s->stack);
+			
+			// restore old stack
+			s->stack = oldStack;
+		}
+		
+		if(b->lastData != NULL){ // a successful push to buffer
+			break;
+		}
+	}
+}
+void bufferFreeIf(Buffer *b){
+	if(b->extra != NULL){
+		BufferIf *data = (BufferIf*)b->extra;
+		freeBuffer(data->bcond);
+		if(data->biterate != NULL)
+			freeBuffer(data->biterate);
+		freeToken(data->branchTrue);
+		if(data->branchFalse != NULL)
+			freeToken(data->branchFalse);
+		free(data);
+		b->extra = NULL;
+	}
+}
+
 Token* opIf(State* s, Token* tk){
-	/*int truth = isTrue(stackPoll(s->stack));
-	if(stackPoll(s->stack) != NULL){
-		s->stack = stackPop(s->stack);
+	Element *cond = stackPoll(s->stack);
+	if(cond != NULL){
+		s->stack = stackPopNoFree(s->stack);
 	}
 	
 	Token *branchTrue = tk;
@@ -45,14 +136,47 @@ Token* opIf(State* s, Token* tk){
 		branchCont = branchCont->next->next;
 	}
 	
-	if(truth){
-		mqlCodeBlock(s, branchTrue);
-	}else if(branchFalse != NULL){
-		mqlCodeBlock(s, branchFalse);
+	if(cond != NULL && cond->type == ET_BUFFER){
+		BufferIf *data = malloc(sizeof(BufferIf));
+		data->branchTrue = duplicateToken(branchTrue);
+		data->branchFalse = NULL;
+		if(branchFalse != NULL)
+			data->branchFalse = duplicateToken(branchFalse);
+		data->bcond = (Buffer*)cond->data;
+		data->bcond->refCounter ++;
+		data->biterate = NULL;
+		
+		Element *iterateOp = stackPoll(s->stack);
+		if(iterateOp != NULL && iterateOp->type == ET_BUFFER){
+			data->biterate = (Buffer*)iterateOp->data;
+			data->biterate->refCounter ++;
+		}
+		
+		Buffer *b = newBufferOriginal();
+		b->next = &bufferNextIf;
+		b->free = &bufferFreeIf;
+		b->extra = data;
+		
+		Element *belm = newElement(ET_BUFFER, (void*)b);
+		cloneOps(belm, cond);
+		if(iterateOp != NULL){
+			cloneOps(belm, iterateOp);
+			s->stack = stackPop(s->stack);
+		}
+		
+		freeElement(cond);
+		s->stack = stackPush(s->stack, belm);
+	}else{
+		int truth = isTrue(cond);
+		freeElement(cond);
+		if(truth){
+			mqlCodeBlock(s, branchTrue);
+		}else if(branchFalse != NULL){
+			mqlCodeBlock(s, branchFalse);
+		}
 	}
+	
 	return branchCont;
-	*/
-	return tk;
 }
 
 /*

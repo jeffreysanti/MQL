@@ -25,6 +25,7 @@ Token *mql_op(State *s, Token *tk);
 Token *tokenize(const char *s);
 int isInputComplete(Token *tk);
 void freeToken(Token *tk);
+Token *duplicateToken(Token *tk);
 
 // METHODS
 MethodList *newMethodList();
@@ -77,12 +78,13 @@ void freeVector(Vector *v);
 void vectorPushBack(Vector *v, Element *e);
 void autoPackStack(State* s);
 void registerVectorOps();
+Element *mergeNoDuplicateVectors(Element *e1, Element *e2);
 
 // Buffers
-Vector *vectorFromBuffer(Buffer *buf);
+Vector *vectorFromBuffer(State *s, Buffer *buf);
 Buffer *bufferFromVector(Vector *vec);
-Element *advanceBuffer(Buffer *buf);
-Element *getBufferData(Buffer *buf);
+Element *advanceBuffer(State *s, Buffer *buf);
+Element *getBufferData(State *s, Buffer *buf);
 Buffer *dupBuffer(Buffer *buf);
 void registerBufferOps();
 int commonBufferLineage(Buffer *b1, Buffer *b2);

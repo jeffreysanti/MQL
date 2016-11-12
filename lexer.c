@@ -207,3 +207,19 @@ void freeToken(Token *tk){
 		free(tk->s);
 	free(tk);
 }
+
+Token *duplicateToken(Token *tk){
+	Token *ret = malloc(sizeof(Token));
+	ret->type = tk->type;
+	ret->next = NULL;
+	ret->s = NULL;
+	if(tk->s != NULL){
+		if(tk->type == TT_CODEBLOCK){
+			ret->s = tk->s;
+		}else{
+			ret->s = dup(tk->s);
+		}
+	}
+	return ret;
+}
+

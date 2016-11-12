@@ -176,21 +176,21 @@ Element *genericArith(Element *op1, Element *op2, char op, int *err){
 }
 
 
-void bufferNextArith(Buffer *b){
+void bufferNextArith(State *s, Buffer *b){
 	BufferArith *arith = (BufferArith*)b->extra;
 	Element *op1 = NULL;
 	Element *op2 = NULL;
 	
 	if(arith->opArangement == BUFARITHOPS_B_B){
-		op1 = getBufferData(b->sourceBuffer1);
-		op2 = getBufferData(b->sourceBuffer2);
+		op1 = getBufferData(s, b->sourceBuffer1);
+		op2 = getBufferData(s, b->sourceBuffer2);
 		if(b->sourceBuffer1->eob || b->sourceBuffer2->eob){
 			b->eob = 1;
 			b->lastData = NULL;
 			return;
 		}
 	}else if(arith->opArangement == BUFARITHOPS_B_N){
-		op1 = getBufferData(b->sourceBuffer1);
+		op1 = getBufferData(s, b->sourceBuffer1);
 		op2 = dupElement(arith->otherValue);
 		if(b->sourceBuffer1->eob){
 			b->eob = 1;
@@ -203,7 +203,7 @@ void bufferNextArith(Buffer *b){
 			b->lastData = NULL;
 			return;
 		}
-		op2 = getBufferData(b->sourceBuffer1);
+		op2 = getBufferData(s, b->sourceBuffer1);
 		op1 = dupElement(arith->otherValue);
 	}
 	
@@ -249,16 +249,19 @@ Element *twoBufferArithOperation(Element *op1, Element *op2, State *s, char op){
 Element *oneBufferArithOperation(Element *op1, Element *op2, State *s, char op){
 	Buffer *buf = NULL;
 	Element *nonbuf = NULL;
+	Element *elmbuf = NULL;
 	
 	BufferArith *data = malloc(sizeof(BufferArith));
 	
 	if(op1->type == ET_BUFFER){
 		buf = (Buffer*)op1->data;
 		nonbuf = op2;
+		elmbuf = op1;
 		data->opArangement = BUFARITHOPS_B_N;
 	}else{
 		buf = (Buffer*)op2->data;
 		nonbuf = op1;
+		elmbuf = op2;
 		data->opArangement = BUFARITHOPS_N_B;
 	}
 	
@@ -271,8 +274,7 @@ Element *oneBufferArithOperation(Element *op1, Element *op2, State *s, char op){
 	b->extra = data;
 	
 	Element *push = newElement(ET_BUFFER, b);
-	cloneOps(push, op1);
-	cloneOps(push, op2);
+	cloneOps(push, elmbuf);
 	return push;
 }
 

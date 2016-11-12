@@ -33,6 +33,8 @@ void freeElement(Element *elm){
 			if(elm.data != NULL){
 				if(elm.type == ET_VECTOR){
 					freeVector((Vector*)elm.data);
+				}else if(elm.type == ET_BUFFER){
+					freeBuffer((Buffer*)elm.data);
 				}else{
 					free(elm.data);
 				}

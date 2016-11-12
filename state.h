@@ -89,23 +89,6 @@ struct Vector {
 	Element **data;
 };
 
-typedef struct Buffer Buffer;
-struct Buffer {
-	int type;
-	void *extra;
-	char eob;
-	Buffer *sourceBuffer1; // where this buffer pulls data from
-	Buffer *sourceBuffer2; // where this buffer pulls data from
-	Buffer *firstBuffer; // original source of data
-	
-	Element *lastData;
-	unsigned int syncCounter;
-	unsigned int refCounter;
-	
-	void (*next)(Buffer*);
-	void (*free)(Buffer*);
-};
-
 typedef struct Stack Stack;
 struct Stack {
 	Element *elm;
@@ -137,6 +120,23 @@ struct State {
 	// Stack
 	// variable symbol table
 	// global defined operator list
+};
+
+typedef struct Buffer Buffer;
+struct Buffer {
+	int type;
+	void *extra;
+	char eob;
+	Buffer *sourceBuffer1; // where this buffer pulls data from
+	Buffer *sourceBuffer2; // where this buffer pulls data from
+	Buffer *firstBuffer; // original source of data
+	
+	Element *lastData;
+	unsigned int syncCounter;
+	unsigned int refCounter;
+	
+	void (*next)(State*,Buffer*);
+	void (*free)(Buffer*);
 };
 
 

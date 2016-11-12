@@ -41,6 +41,34 @@ void vectorPushBack(Vector *v, Element *e){
 }
 
 
+Element *mergeNoDuplicateVectors(Element *e1, Element *e2){
+	if(e1 == NULL){
+		return NULL;
+	}
+	if(e1->type != ET_VECTOR){
+		Vector *v = newVector();
+		vectorPushBack(v, e1);
+		e1 = newElement(ET_VECTOR, v);
+	}
+	
+	Vector *v1 = (Vector*)e1->data;
+	if(e2 == NULL){
+		return e1;
+	}
+	if(e2->type == ET_VECTOR){
+		Vector *v2 = (Vector*)e2->data;
+		for(int i=0; i<v2->len; ++i){
+			e1 = mergeNoDuplicateVectors(e1, v2->data[i]);
+			v2->data[i] = NULL;
+		}
+		freeElement(e2);
+	}else if(e2->type != ET_BUFFER){
+		vectorPushBack(v1, e2);
+	}
+	return e1;
+}
+
+
 
 // if a vector element is on the stack does nothing
 // otherwise autopack all elements on stack into
@@ -129,7 +157,7 @@ struct BufferRange {
 	long int final;
 };
 
-void bufferNextRange(Buffer *b){
+void bufferNextRange(State *s, Buffer *b){
 	BufferRange *rng = (BufferRange*)b->extra;
 	if(rng->next > rng->final){
 		b->eob = 1;
