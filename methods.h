@@ -88,6 +88,7 @@ Element *getBufferData(State *s, Buffer *buf);
 Buffer *dupBuffer(Buffer *buf);
 void registerBufferOps();
 int commonBufferLineage(Buffer *b1, Buffer *b2);
+Element *constantBuffer(Element *elm);
 
 // OPS
 void registerGloablOp(char *s, Token* (*func)(State*, Token*));

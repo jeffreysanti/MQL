@@ -4,8 +4,9 @@ int isSpecialCase(Token *tk){
 	if(tk->type != TT_OP){
 		return 0;
 	}
-	return (!strcmp(tk->s, "PUSH") || !strcmp(tk->s, "push") || 
-				!strcmp(tk->s, "CONTINUE") || !strcmp(tk->s, "continue"));
+	//return (!strcmp(tk->s, "PUSH") || !strcmp(tk->s, "push") || 
+	//			!strcmp(tk->s, "CONTINUE") || !strcmp(tk->s, "continue"));
+	return 0;
 }
 
 int isTrue(Element *elm){
@@ -23,6 +24,18 @@ int isTrue(Element *elm){
 		return (v->len > 0) ? 1 : 0;
 	}
 	return 0;
+}
+
+Element *trueBuffer(){
+	Element *etrue = newElement(ET_NUMBER, NULL);
+	etrue->dval = 1;
+	return constantBuffer(etrue);
+}
+
+Element *falseBuffer(){
+	Element *efalse = newElement(ET_NUMBER, NULL);
+	efalse->dval = 0;
+	return constantBuffer(efalse);
 }
 
 Token* opNop(State* s, Token* tk){
@@ -51,7 +64,7 @@ void bufferNextIf(State* s, Buffer *b){
 			
 			Element *econd = getBufferData(s, data->bcond);
 			Element *eiterate = getBufferData(s, data->biterate);
-			if(data->bcond->eob || data->bcond->eob){
+			if(data->bcond->eob || data->biterate->eob){
 				b->eob = 1;
 				b->lastData = NULL;
 				return;
@@ -166,6 +179,19 @@ Token* opIf(State* s, Token* tk){
 		
 		freeElement(cond);
 		s->stack = stackPush(s->stack, belm);
+	}else if(stackPoll(s->stack) != NULL && stackPoll(s->stack)->type == ET_BUFFER){ // single condition loop
+		int truth = isTrue(cond);
+		freeElement(cond);
+		
+		// add a constant buffer of truth or falseness
+		if(truth){
+			s->stack = stackPush(s->stack, trueBuffer());
+		}else{
+			s->stack = stackPush(s->stack, falseBuffer());
+		}
+		
+		// now try this if again
+		return opIf(s, tk);
 	}else{
 		int truth = isTrue(cond);
 		freeElement(cond);
@@ -177,6 +203,20 @@ Token* opIf(State* s, Token* tk){
 	}
 	
 	return branchCont;
+}
+
+Token* opFor(State* s, Token* tk){
+	Element *op1 = stackPoll(s->stack);
+	if(op1 == NULL || op1->type != ET_BUFFER){
+		s->invalid = 1;
+		s->errStr = dup("For can only operate on a buffer");
+		freeElement(op1);
+		return tk;
+	}
+	
+	// now push an eternal truth and treat it like an if statement
+	s->stack = stackPush(s->stack, trueBuffer());
+	return opIf(s, tk);
 }
 
 /*
@@ -252,6 +292,10 @@ Token* opFor(State* s, Token* tk){
 void registerControlOps(){
 	registerGloablOp("IF", &opIf);
 	registerGloablOp("if", &opIf);
+	
+	registerGloablOp("FOR", &opFor);
+	registerGloablOp("for", &opFor);
+	
 	registerGloablOp("NOP", &opNop);
 	registerGloablOp("nop", &opNop);
 	//registerGloablOp("FOR", &opFor);

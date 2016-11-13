@@ -216,6 +216,39 @@ Token* opMultiplex(State* s, Token* tk){
 	return tk;
 }
 
+
+typedef struct BufferConstant BufferConstant;
+struct BufferConstant {
+	Element *repeat;
+};
+
+void bufferNextConstant(State *s, Buffer *b){
+	BufferConstant *data = (BufferConstant*)b->extra;
+	
+	b->lastData = dupElement(data->repeat);
+}
+void bufferFreeConstant(Buffer *b){
+	if(b->extra != NULL){
+		BufferConstant *data = (BufferConstant*)b->extra;
+		freeElement(data->repeat);
+		free(data);
+		b->extra = NULL;
+	}
+}
+
+Element *constantBuffer(Element *elm){
+	BufferConstant *data = malloc(sizeof(BufferConstant));
+	data->repeat = elm;
+	
+	Buffer *b = newBufferOriginal();
+	b->next = &bufferNextConstant;
+	b->free = &bufferFreeConstant;
+	b->extra = data;
+	
+	Element *belm = newElement(ET_BUFFER, (void*)b);
+	return belm;
+}
+
 void registerBufferOps(){
 	registerGloablOp("->v", &opVectorize);
 	registerGloablOp("->b", &opBufferize);

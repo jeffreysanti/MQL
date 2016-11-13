@@ -69,35 +69,6 @@ Element *mergeNoDuplicateVectors(Element *e1, Element *e2){
 }
 
 
-
-// if a vector element is on the stack does nothing
-// otherwise autopack all elements on stack into
-// a vector on the stack
-/*void autoPackStack(State* s){
-	Element *top = stackPoll(s->stack);
-	if(top == NULL){
-		top = newElement(ET_VECTOR, (void*)newVector());
-		s->stack = stackPush(s->stack, top);
-		return;
-	}
-	if(top->type == ET_VECTOR){
-		return; // we're all good
-	}
-	
-	int elmCnt = stackSize(s->stack);
-	Vector *v = newVector();
-	v->alloc = elmCnt;
-	v->len = elmCnt;
-	v->data = malloc(sizeof(Element*) * elmCnt);
-	Element *ret = newElement(ET_VECTOR, (void*)v);
-	
-	for(int i=elmCnt-1; i>=0; --i){
-		Element *e = stackPoll(s->stack);
-		v->data[i] = e;
-		s->stack = stackPopNoFree(s->stack);
-	}
-}*/
-
 Token* opVecOpen(State* s, Token* tk){
 	Element *velm = newElement(ET_VECTOR, (void*)newVector());
 	s->vstack = stackPush(s->vstack, velm);
@@ -207,6 +178,40 @@ Token* opRange(State* s, Token* tk){
 	return tk;
 }
 
+
+typedef struct BufferVecGet BufferVecGet;
+struct BufferVecGet {
+	unsigned int index;
+};
+
+void bufferNextVecGet(State *s, Buffer *b){
+	BufferVecGet *data = (BufferVecGet*)b->extra;
+	Element *evec = getBufferData(s, b->sourceBuffer1);
+	if(b->sourceBuffer1->eob){
+		b->eob = 1;
+		b->lastData = NULL;
+		return;
+	}
+	
+	if(evec->type != ET_VECTOR){
+		b->lastData = newElement(ET_NUMBER, NULL);
+	}else{
+		Vector *v = (Vector*)evec->data;
+		if(data->index < 0 || data->index >= v->len){
+			b->lastData = newElement(ET_NUMBER, NULL);
+		}else{
+			b->lastData = dupElement(v->data[data->index]);
+		}
+	}
+}
+void bufferFreeVecGet(Buffer *b){
+	if(b->extra != NULL){
+		BufferVecGet *data = (BufferVecGet*)b->extra;
+		free(data);
+		b->extra = NULL;
+	}
+}
+
 Token* opGet(State* s, Token* tk){
 	Element *op2 = popStackOrErr(s);
 	Element *op1 = stackPoll(s->stack);
@@ -214,7 +219,7 @@ Token* opGet(State* s, Token* tk){
 		return tk;
 	}
 	
-	if(op1 == NULL || op2->type != ET_NUMBER || op1->type != ET_VECTOR){
+	if(op1 == NULL || op2->type != ET_NUMBER || (op1->type != ET_VECTOR && op1->type != ET_BUFFER)){
 		s->invalid = 1;
 		s->errStr = dup("Get must take form <vec> <index:int> get");
 		freeElement(op1);
@@ -222,20 +227,33 @@ Token* opGet(State* s, Token* tk){
 		return tk;
 	}
 	
-	Vector *v = (Vector*)op1->data;
-	int index = op2->dval;
-	if(index >= v->len || index < 0){
-		s->invalid = 1;
-		s->errStr = dup("Get out of range");
-		freeElement(op1);
-		freeElement(op2);
-		return tk;
+	if(op1->type == ET_BUFFER){
+		BufferVecGet *data = malloc(sizeof(BufferVecGet));
+		data->index = op2->dval;
+		
+		Buffer *b = newBufferWithSource((Buffer*)op1->data, NULL);
+		b->next = &bufferNextVecGet;
+		b->free = &bufferFreeVecGet;
+		b->extra = (void*)data;
+		
+		Element *push = newElement(ET_BUFFER, (void*)b);
+		s->stack = stackPush(s->stack, push);
+	}else{
+		Vector *v = (Vector*)op1->data;
+		int index = op2->dval;
+		if(index >= v->len || index < 0){
+			s->invalid = 1;
+			s->errStr = dup("Get out of range");
+			freeElement(op1);
+			freeElement(op2);
+			return tk;
+		}
+		
+		// push result
+		Element *push = dupElement(v->data[index]);
+		s->stack = stackPush(s->stack, push);
 	}
-	
-	// push result
-	Element *push = dupElement(v->data[index]);
-	s->stack = stackPush(s->stack, push);
-	
+		
 	freeElement(op2);
 	return tk;
 }

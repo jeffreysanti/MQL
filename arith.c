@@ -170,8 +170,8 @@ Element *genericArith(Element *op1, Element *op2, char op, int *err){
 	
 	cloneOps(push, op1);
 	cloneOps(push, op2);
-	freeElement(op1);
-	freeElement(op2);
+//	freeElement(op1);
+//	freeElement(op2);
 	return push;
 }
 

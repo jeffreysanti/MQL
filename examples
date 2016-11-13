@@ -14,3 +14,8 @@
 	. __countx
 ;
 
+
+
+
+: sum { 0 ! __sum . for { __sum + ! __sum . } ->v . __sum }
+
