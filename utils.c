@@ -1,6 +1,15 @@
 #include "utils.h"
 
 
+// returns whether a character is considered whitespace
+char whitespace(char c){
+	if(c == ' ' || c == '\t' || c == '\n' || c == '\r'){
+		return 1;
+	}
+	return 0;
+}
+
+
 char *dupl(const char *s, const char *end){
 	char *res = malloc(end - s + 1);
 	memcpy(res, s, end-s);

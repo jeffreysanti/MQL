@@ -219,6 +219,108 @@ Token* opFor(State* s, Token* tk){
 	return opIf(s, tk);
 }
 
+
+typedef struct BufferFilter BufferFilter;
+struct BufferFilter {
+	Token *branchCond;
+	Buffer *biterate;
+};
+
+void bufferNextFilter(State* s, Buffer *b){
+	while(1){
+		BufferFilter *data = (BufferFilter*)b->extra;
+		
+		advanceBuffer(s, data->biterate);
+		Element *eiterate = getBufferData(s, data->biterate);
+		if(data->biterate->eob){
+			b->eob = 1;
+			b->lastData = NULL;
+			return;
+		}
+		
+		Element *eiterateCpy = dupElement(eiterate);
+		
+		// Use a clean stack inside test code blocks
+		Stack *oldStack = s->stack;
+		
+		s->stack = newStack();
+		s->stack = stackPush(s->stack, eiterate);
+		mqlCodeBlock(s, data->branchCond);
+		if(isTrue(stackPoll(s->stack))){
+			// pass this element
+
+			b->lastData = eiterateCpy;
+			s->stack = stackPopAll(s->stack);
+			
+			// restore old stack
+			s->stack = oldStack;
+		}else{
+			// Reject
+			
+			b->lastData = NULL;
+			freeElement(eiterateCpy);
+			s->stack = stackPopAll(s->stack);
+			
+			// restore old stack
+			s->stack = oldStack;
+		}
+		
+		if(b->lastData != NULL){ // a successful push to buffer
+			break;
+		}
+	}
+}
+void bufferFreeFilter(Buffer *b){
+	if(b->extra != NULL){
+		BufferFilter *data = (BufferFilter*)b->extra;
+		if(data->biterate != NULL)
+			freeBuffer(data->biterate);
+		freeToken(data->branchCond);
+		free(data);
+		b->extra = NULL;
+	}
+}
+
+// As an example equvilancy:
+//               filter {2 >}
+//    ====>      dup 2 > if {} else .
+Token * opFilter(State* s, Token* tk){
+	Element *op1 = stackPoll(s->stack);
+	if(op1 == NULL || op1->type != ET_BUFFER){
+		s->invalid = 1;
+		s->errStr = dup("Filter can only operate on a buffer");
+		freeElement(op1);
+		return tk;
+	}
+
+	Token *cond = tk;
+	if(cond == NULL){
+		s->invalid = 1;
+		s->errStr = dup("Filter must have a condtion following it");
+		freeElement(op1);
+		return tk;
+	}
+	s->stack = stackPopNoFree(s->stack);
+
+	BufferFilter *data = malloc(sizeof(BufferIf));
+	data->branchCond = duplicateToken(cond);
+	data->biterate = (Buffer*)op1->data;
+	data->biterate->refCounter ++;
+		
+	Buffer *b = newBufferOriginal();
+	b->next = &bufferNextFilter;
+	b->free = &bufferFreeFilter;
+	b->extra = data;
+		
+	Element *belm = newElement(ET_BUFFER, (void*)b);
+	cloneOps(belm, op1);
+	
+	s->stack = stackPush(s->stack, belm);
+
+
+	return cond->next;
+}
+
 /*
 Token* opFor(State* s, Token* tk){
 	autoPackStack(s);
@@ -295,6 +397,9 @@ void registerControlOps(){
 	
 	registerGloablOp("FOR", &opFor);
 	registerGloablOp("for", &opFor);
+
+	registerGloablOp("FILTER", &opFilter);
+	registerGloablOp("filter", &opFilter);
 	
 	registerGloablOp("NOP", &opNop);
 	registerGloablOp("nop", &opNop);
