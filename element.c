@@ -13,9 +13,6 @@ void startNewElementPool(){
 	pool->freeCount = 0;
 	pool->nextSlot = 0;
 	pool->prev = pool_elm;
-	if(pool_elm != NULL){
-		pool_elm->next = pool;
-	}
 	pool_elm = pool;
 }
 
@@ -23,38 +20,38 @@ void freeElement(Element *elm){
 	if(elm == NULL){
 		return;
 	}
+
+	if(elm->data != NULL){
+		if(elm->type == ET_VECTOR){
+			freeVector((Vector*)elm->data);
+		}else if(elm->type == ET_BUFFER){
+			freeBuffer((Buffer*)elm->data);
+		}else{
+			free(elm->data);
+		}
+	}
+	freeMethodList(&elm->methods);
 	
 	MemoryPool *owner = elm->owner;
 	++ owner->freeCount;
 	if(owner->freeCount == owner->capacity){
 		pool_elm_cnt --;
-		for(unsigned int i=0; i<owner->capacity; ++i){
-			Element elm = ((Element*)owner->members)[i];
-			if(elm.data != NULL){
-				if(elm.type == ET_VECTOR){
-					freeVector((Vector*)elm.data);
-				}else if(elm.type == ET_BUFFER){
-					freeBuffer((Buffer*)elm.data);
-				}else{
-					free(elm.data);
+		free(owner->members);
+
+		if(owner == pool_elm){
+			// nothing after it, so go back
+			pool_elm = owner->prev;
+		}else{
+			// need to rebuild the list
+			MemoryPool *prev = pool_elm;
+			while(prev != NULL){
+				if(prev->prev == owner){
+					prev->prev = owner->prev;
 				}
+				prev = prev->prev;
 			}
-			
-			freeMethodList(&elm.methods);
 		}
 		
-		free(owner->members);
-		if(owner == pool_elm){
-			startNewElementPool();
-			owner->next = pool_elm;
-			
-		}
-		if(owner->prev != NULL){
-			owner->prev->next = owner->next;
-		}
-		if(owner->next != NULL){
-			owner->next->prev = owner->prev;
-		}
 		free(owner);
 	}
 }

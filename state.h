@@ -39,7 +39,6 @@ struct MemoryPool {
 	unsigned int capacity;
 	unsigned int freeCount;
 	
-	MemoryPool *next;
 	MemoryPool *prev;
 };
 
@@ -96,6 +95,13 @@ struct Stack {
 	unsigned int bRef;
 };
 
+typedef struct EnvStack EnvStack;
+struct EnvStack {
+	Token *tk;
+	int skipTokens;
+	EnvStack *parent;
+};
+
 
 typedef struct SymbolTable SymbolTable;
 struct SymbolTable {
@@ -115,6 +121,9 @@ struct State {
 	Stack *vstack;
 	
 	SymbolTable *symbols;
+
+	Token *tk;
+	EnvStack *envs;
 	
 	// Token list
 	// Stack

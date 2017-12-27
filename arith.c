@@ -135,6 +135,8 @@ Element *genericArith(Element *op1, Element *op2, char op, int *err){
 		dres = dop1 * dop2;
 	}else if(op == '/'){ // div
 		dres = dop1 / dop2;
+	}else if(op == '%'){ // mod
+		dres = (int)dop1 % (int)dop2;
 	}else if(op == '^'){ // exp
 		dres = pow(dop1, dop2);
 	}else if(op == '>'){
@@ -302,6 +304,7 @@ TWO_OP_ARITH_FUNC(opPlus, '+')
 TWO_OP_ARITH_FUNC(opSub, '-')
 TWO_OP_ARITH_FUNC(opMult, '*')
 TWO_OP_ARITH_FUNC(opDiv, '/')
+TWO_OP_ARITH_FUNC(opMod, '%')
 TWO_OP_ARITH_FUNC(opExp, '^')
 
 TWO_OP_ARITH_FUNC(opEQ, '=')
@@ -322,6 +325,8 @@ void registerArithmeticOps(){
 	registerGloablOp("-", &opSub);
 	registerGloablOp("*", &opMult);
 	registerGloablOp("/", &opDiv);
+	registerGloablOp("MOD", &opMod);
+	registerGloablOp("mod", &opMod);
 	registerGloablOp("^", &opExp);
 	
 	registerGloablOp(">", &opGT);

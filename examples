@@ -1,21 +1,57 @@
-   valgrind --tool=callgrind ./mql
+valgrind --tool=callgrind ./mql
 
 
-:fib dup dup 
-	0 = if . . 0 
-	else 1 = if . 1 
-	else dup 1 - fib swap 2 - fib +
-;
-
-25 fib
-
-:count 0 ! __countx .
-	for 1 __countx + ! __countx . continue orf
-	. __countx
-;
-
-
-
-
+clr
 : sum { 0 ! __sum . for { __sum + ! __sum . } ->v . __sum }
+[1,2,3,4,5] ->b sum
+# 15
+
+clr
+: count { 0 ! __count . for { . 1 __count + ! __count } ->v . __count }
+[1,2,3,4,5] ->b count
+# 5
+
+clr
+: fib {
+	dup dup
+	0 = if {. . 0}
+	else {1 = if {. 1}
+	else {dup 1 - fib swap 2 - fib +}}
+}
+10 fib
+# 55
+
+
+clr
+:filter2 { dup 1 %after if {} else . 1 %skip}
+:even { filter2 { 2 MOD 0 = } }
+[1,2,3,4,5,6,7,8,9,10] ->b even ->v
+# 2,4,6,8,10
+
+
+clr
+:loop {1 swap range for { . 1 %afterr } ->v . 1 %skip }
+5 loop { 'iter' @ . }
+# 'iter' should be printed 5 times, and null on stack
+
+
+clr
+:five1 {1 buffer { dup 6 = if {. .} else {1 + 1} } }
+five1 ->v
+# 1,1,1,1,1
+
+
+clr
+# Usage N repeat M => M,M,M, ... M (N times)
+:repeat { 5 3 %inserttx {1 %afterr}  buffer { dup 1 = if {. .} else {1 - 1    nop } } 1 %skip}
+10 repeat 0 ->v
+
+
+
+
+
+
+
+
+
 

@@ -78,9 +78,9 @@ void bufferNextIf(State* s, Buffer *b){
 			int truth = isTrue(cond);
 			freeElement(cond);
 			if(truth){
-				mqlCodeBlock(s, data->branchTrue);
+				mqlCodeBlockNewEnv(s, data->branchTrue);
 			}else if(data->branchFalse != NULL){
-				mqlCodeBlock(s, data->branchFalse);
+				mqlCodeBlockNewEnv(s, data->branchFalse);
 			}
 			b->lastData = stackPoll(s->stack);
 			s->stack = stackPopNoFree(s->stack);
@@ -103,9 +103,9 @@ void bufferNextIf(State* s, Buffer *b){
 			int truth = isTrue(cond);
 			freeElement(cond);
 			if(truth){
-				mqlCodeBlock(s, data->branchTrue);
+				mqlCodeBlockNewEnv(s, data->branchTrue);
 			}else if(data->branchFalse != NULL){
-				mqlCodeBlock(s, data->branchFalse);
+				mqlCodeBlockNewEnv(s, data->branchFalse);
 			}
 			b->lastData = stackPoll(s->stack);
 			s->stack = stackPopNoFree(s->stack);
@@ -196,9 +196,9 @@ Token* opIf(State* s, Token* tk){
 		int truth = isTrue(cond);
 		freeElement(cond);
 		if(truth){
-			mqlCodeBlock(s, branchTrue);
+			mqlCodeBlockNewEnv(s, branchTrue);
 		}else if(branchFalse != NULL){
-			mqlCodeBlock(s, branchFalse);
+			mqlCodeBlockNewEnv(s, branchFalse);
 		}
 	}
 	
@@ -245,7 +245,7 @@ void bufferNextFilter(State* s, Buffer *b){
 		
 		s->stack = newStack();
 		s->stack = stackPush(s->stack, eiterate);
-		mqlCodeBlock(s, data->branchCond);
+		mqlCodeBlockNewEnv(s, data->branchCond);
 		if(isTrue(stackPoll(s->stack))){
 			// pass this element
 

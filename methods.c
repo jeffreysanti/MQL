@@ -317,36 +317,32 @@ Token* opDef(State* s, Token* tk){
 }
 */
 
-Token *execAssociatedOp(State *s, Token *tk){
+void execAssociatedOp(State *s){
 	Element *op = stackPoll(s->stack);
 	if(op == NULL){
-		return tk;
+		return;
 	}
 	
-	Token *exec = findMethod(op->methods, tk->s);
+	Token *exec = findMethod(op->methods, s->tk->s);
 	if(exec == NULL){
-		return tk;
+		return;
 	}
-	
-	Token *tkNext = tk->next;
+
 	mql(s, exec);
-	return tkNext;
 }
 
-Token *execGloablOp(State *s, Token *tk){
-	Token *exec = findMethod(s->globalMethods, tk->s);
+void execGloablOp(State *s){
+	Token *exec = findMethod(s->globalMethods, s->tk->s);
 	if(exec == NULL){
-		Element *sym = findSymbol(s->symbols, tk->s);
+		Element *sym = findSymbol(s->symbols, s->tk->s);
 		if(sym != NULL){
 			s->stack = stackPush(s->stack, dupElement(sym));
-			return tk->next;
+			s->tk = s->tk->next;
 		}
-		return tk;
+		return;
 	}
 	
-	Token *tkNext = tk->next;
 	mql(s, exec);
-	return tkNext;
 }
 
 Token* opMethods(State* s, Token* tk){
@@ -374,6 +370,57 @@ Token* opMethods(State* s, Token* tk){
 	return tk;
 }
 
+void dumpSource(Token *tk, int level){
+	for(int i=0; i<level; ++i){
+		printf("  ");
+	}
+	printf("{");
+	while(tk != NULL){
+		printf(" ");
+		if(tk->type == TT_CODEBLOCK){
+			printf("\n");
+			Token *exec = codeBlockExecToken((int)tk->s);
+			dumpSource(exec, level + 1);
+		}else if(tk->type == TT_NUMBER){
+			printf("%f", strtod(tk->s, NULL));
+		}else if(tk->type == TT_STRING){
+			printf("\"%s\"", tk->s);
+		}else if(tk->type == TT_DEFINE){
+			printf(":", tk->s);
+		}else{
+			printf("%s", tk->s);
+		}
+		tk = tk->next;
+	}
+	printf(" } \n");
+}
+
+Token* opSrc(State* s, Token* tk){
+	if(tk == NULL){
+		s->invalid = 1;
+		s->errStr = dup("Source not followed by a method name");
+		return NULL;
+	}
+
+	Token *exec = NULL;
+	if(stackPoll(s->stack) != NULL){
+		exec = findMethod(stackPoll(s->stack), tk->s);
+	}
+
+	if(exec == NULL){
+		exec = findMethod(s->globalMethods, s->tk->s);
+	}
+
+	if(exec == NULL){
+		printf("Not Defined\n");
+	}else{
+		printf("Source Follows:\n");
+		dumpSource(exec, 0);
+	}
+	return tk->next;
+}
+
+
 Token* opBang(State* s, Token* tk){
 	if(tk == NULL || tk->type != TT_OP){
 		s->invalid = 1;
@@ -399,5 +446,8 @@ void registerMethodOps(){
 	registerGloablOp("ops", &opMethods);
 	registerGloablOp("OPS", &opMethods);
 	registerGloablOp("!", &opBang);
+
+	registerGloablOp("src", &opSrc);
+	registerGloablOp("SRC", &opSrc);
 }
 

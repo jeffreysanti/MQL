@@ -15,7 +15,7 @@ void bufferNextOfVec(State *s, Buffer *b){
 		return;
 	}
 	b->lastData = data->v->data[data->nextIndex];
-	data->v->data[data->nextIndex] = NULL;
+	data->v->data[data->nextIndex] = NULL; // so it isn't freed again
 	++ data->nextIndex;
 }
 void bufferFreeOfVec(Buffer *b){
@@ -249,11 +249,97 @@ Element *constantBuffer(Element *elm){
 	return belm;
 }
 
+
+
+
+
+// Custom buffers use:
+// [initial private data] buffer {codeblock}
+// codeblock is a generator function
+// Pre Stack: [private data]
+// Post Stack : [updated private data | buffer data], or nil if eob
+
+typedef struct BufferCustom BufferCustom;
+struct BufferCustom {
+	Token *branch;
+	Element *priv;
+};
+
+void bufferNextOfCustom(State *s, Buffer *b){
+	BufferCustom *data = (BufferCustom*)b->extra;
+
+	Stack *oldStack = s->stack;
+	s->stack = newStack();
+	s->stack = stackPush(s->stack, data->priv);
+	data->priv = NULL;
+
+	// Pre condition [private data]
+	mqlCodeBlockNewEnv(s, data->branch);
+	// post condition [new private | buffer data] or nil
+
+	b->lastData = stackPoll(s->stack);
+	s->stack = stackPopNoFree(s->stack);
+	if(b->lastData == NULL || s->stack == NULL || stackPoll(s->stack) == NULL){
+		b->eob = 1;
+	}else{
+		data->priv = stackPoll(s->stack);
+		s->stack = stackPopNoFree(s->stack);
+	}
+
+	// restore old stack
+	s->stack = stackPopAll(s->stack);
+	s->stack = oldStack;
+}
+void bufferFreeOfCustom(Buffer *b){
+	if(b->extra != NULL){
+		BufferCustom *data = (BufferCustom*)b->extra;
+		freeToken(data->branch);
+		free(data);
+		b->extra = NULL;
+	}
+}
+
+Token* opBuffer(State* s, Token* tk){
+	Element *op1 = popStackOrErr(s);
+	if(op1 == NULL){
+		s->invalid = 1;
+		s->errStr = dup("Buffer generation requires initital private data on stack");
+		return tk;
+	}
+
+	Token *branchGen = tk;
+	
+	if(branchGen == NULL){
+		s->invalid = 1;
+		s->errStr = dup("Buffer generation requires a generator codeblock");
+		return tk;
+	}
+
+	BufferCustom *data = malloc(sizeof(BufferCustom));
+	data->branch = duplicateToken(branchGen);
+	data->priv = op1;
+
+	Buffer *b = newBufferOriginal();
+	b->next = &bufferNextOfCustom;
+	b->free = &bufferFreeOfCustom;
+	b->extra = data;
+	
+	Element *belm = newElement(ET_BUFFER, (void*)b);
+	s->stack = stackPush(s->stack, belm);
+	return tk->next;
+}
+
+
+
+
 void registerBufferOps(){
 	registerGloablOp("->v", &opVectorize);
 	registerGloablOp("->b", &opBufferize);
 	registerGloablOp("mux", &opMultiplex);
 	registerGloablOp("MUX", &opMultiplex);
+
+	registerGloablOp("buffer", &opBuffer);
+	registerGloablOp("BUFFER", &opBuffer);
 }
 
 

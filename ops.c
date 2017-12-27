@@ -36,21 +36,20 @@ void freeGlobalOps(){
 	}
 }
 
-Token *execSuperGloablOp(State *s, Token *tk){
+void execSuperGloablOp(State *s){
 	GlobalOpList *x;
-	char *str = tk->s;
+	char *str = s->tk->s;
 	
 	HASH_FIND_STR(_GOL, str, x);
 	if(x == NULL){
 		// now assume it's a string
-		tk->type = TT_STRING;
-		tk = mqlProc_Elm(s, tk);
-		return tk;
+		s->tk->type = TT_STRING;
+		s->tk = mqlProc_Elm(s, s->tk);
+		return;
 	}
 	
-	tk = tk->next;
-	tk = x->func(s, tk);
-	return tk;
+	s->tk = s->tk->next;
+	s->tk = x->func(s, s->tk);
 }
 
 void printGlobalOps(){

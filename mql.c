@@ -22,6 +22,8 @@ State *newState(){
 	s->stack = newStack();
 	s->vstack = newStack();
 	s->symbols = newSymbolTable();
+	s->tk = NULL;
+	s->envs = NULL;
 	
 	return s;
 }
@@ -41,58 +43,103 @@ void freeState(State *s){
 	free(s);
 }
 
+EnvStack *newEnv(EnvStack *s){
+	EnvStack *s_new = malloc(sizeof(EnvStack));
+	s_new->tk = NULL;
+	s_new->parent = s;
+	s_new->skipTokens = 0;
+	return s_new;
+}
+
+EnvStack *envPop(EnvStack *s){
+	if(s == NULL)
+		return NULL;
+	EnvStack *ret = s->parent;
+	s->parent = NULL;
+	free(s);
+	return ret;
+}
+
 State *mql_s(State *s, const char *str){
 	Token *tk = tokenize(str);
 	s = mql(s, tk);
 	freeToken(tk);
-}
-
-Token *execGloablOp(State *s, Token *tk);
-Token *execAssociatedOp(State *s, Token *tk);
-
-Token *mql_op(State *s, Token *tk){
-	Token *start = tk;
-	tk = execAssociatedOp(s, tk);
-	if(!s->invalid && tk == start){
-		tk = execGloablOp(s, tk);
-		if(!s->invalid && tk == start){
-			tk = execSuperGloablOp(s, tk);
-		}
-	}
-	return tk;
-}
-
-State *mql(State *s, Token *tk){
-	if(s == NULL){
-		s = newState();
-	}
-	
-	while(tk != NULL){
-		if(s->invalid)
-			return s;
-		
-		tk = mqlCodeBlock(s, tk);
-	}
 	return s;
 }
 
-Token *mqlCodeBlock(State *s, Token *tk){
+void execGloablOp(State *s);
+void execAssociatedOp(State *s);
+
+void mql_op(State *s){
+	Token *start = s->tk;
+	execAssociatedOp(s);
+	if(!s->invalid && s->tk == start){
+		execGloablOp(s);
+		if(!s->invalid && s->tk == start){
+			execSuperGloablOp(s);
+		}
+	}
+}
+
+// mql executes until token list drained
+State *mql(State *s, Token *tk){
 	if(tk == NULL){
-		return tk;
+		return s;
+	}
+
+	if(s->tk != NULL){
+		s->envs = newEnv(s->envs);
+		s->envs->tk = s->tk->next;
+	}
+	s->tk = tk;
+
+	while(s->tk != NULL){
+		if(s->invalid)
+			return s;
+		
+		mqlCodeBlock(s);
+	}
+
+	// restore old environment
+	if(s->envs != NULL){
+		s->tk = s->envs->tk;
+
+		// skip tokens if needed
+		for(int i=0; i<s->envs->skipTokens; ++i){
+			if(s->tk == NULL){
+				break;
+			}
+			s->tk = s->tk->next;
+		}
+
+		s->envs = envPop(s->envs);
+	}
+
+	return s;
+}
+
+
+// mqlCodeBlock limits execution to a single symbol or codeblock
+void mqlCodeBlock(State *s){
+	if(s->tk == NULL){
+		return;
 	}
 	
-	if(tk->type == TT_CODEBLOCK){
-		Token *exec = codeBlockExecToken((int)tk->s);
-		s = mql(s, exec);
-		tk = tk->next;
-	}else if(tk->type == TT_NUMBER || tk->type == TT_STRING){
-		tk = mqlProc_Elm(s, tk);
-	}else if(tk->type == TT_DEFINE){
-		tk = mqlProc_Def(s, tk);
+	if(s->tk->type == TT_CODEBLOCK){
+		Token *exec = codeBlockExecToken((int)s->tk->s);
+		mql(s, exec);
+	}else if(s->tk->type == TT_NUMBER || s->tk->type == TT_STRING){
+		s->tk = mqlProc_Elm(s, s->tk);
+	}else if(s->tk->type == TT_DEFINE){
+		s->tk = mqlProc_Def(s, s->tk);
 	}else{
-		tk = mql_op(s, tk);
+		mql_op(s);
 	}
-	return tk;
+}
+
+void mqlCodeBlockNewEnv(State *s, Token *tk){
+	s->tk = tk;
+	mqlCodeBlock(s);
 }
 
 void init(){
@@ -105,6 +152,7 @@ void init(){
 	registerMethodOps();
 	registerControlOps();
 	registerBufferOps();
+	registerManipOps();
 	
 	driver_sqlite();
 }
@@ -147,7 +195,6 @@ int main(int argc, char **argv){
 		}
 		add_history(line);
 		
-		
 		state = mql(state, tk);
 		if(state->invalid){
 			printf("Error: %s \n", state->errStr);
@@ -163,24 +210,6 @@ int main(int argc, char **argv){
 			freeToken(tk);
 		free(line);
 	}
-	
-	
-	/*char *line = ":fib dup dup 	0 = if . . 0 	else 1 = if . 1 	else dup 1 - fib swap 2 - fib + ; 20 fib";
-	Token *tk = tokenize(line);
-	state = mql(state, tk);
-	if(state->invalid){
-		printf("Error: %s \n", state->errStr);
-		state->invalid = 0;
-		free(state->errStr);
-		state->errStr = NULL;
-	}
-	
-	Element *top = stackPoll(state->stack);
-	printElement(top);
-	
-	if(tk != NULL)
-		freeToken(tk);
-	*/
 	
 	freeState(state);
 	cleanup();

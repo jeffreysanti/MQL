@@ -15,10 +15,11 @@
 // Main
 State *mql_s(State *s, const char *str);
 State *mql(State *s, Token *tk);
-Token *mqlCodeBlock(State *s, Token *tk);
+void mqlCodeBlock(State *s);
+void mqlCodeBlockNewEnv(State *s, Token *tk);
 State *newState();
 void freeState(State *s);
-Token *mql_op(State *s, Token *tk);
+void mql_op(State *s);
 
 
 // LEXER
@@ -37,8 +38,8 @@ Token *mqlProc_Def(State *s, Token *tk);
 Token* preprocessMethods(State* s, Token* tk);
 void addMethod(MethodList **ml, char *s, unsigned int mid);
 void removeMethod(MethodList **ml, char *s);
-Token *execGloablOp(State *s, Token *tk);
-Token *execAssociatedOp(State *s, Token *tk);
+void execGloablOp(State *s);
+void execAssociatedOp(State *s);
 Token *findMethod(MethodList *ml, char *s);
 SymbolTable *newSymbolTable();
 void freeSymbolTable(SymbolTable **st);
@@ -92,7 +93,7 @@ Element *constantBuffer(Element *elm);
 
 // OPS
 void registerGloablOp(char *s, Token* (*func)(State*, Token*));
-Token *execSuperGloablOp(State *s, Token *tk);
+void execSuperGloablOp(State *s);
 void freeGlobalOps();
 void printGlobalOps();
 
@@ -102,6 +103,9 @@ void registerArithmeticOps();
 // CONTROL
 int isTrue(Element *elm);
 void registerControlOps();
+
+// MANIP
+void registerManipOps();
 
 
 // DRIVERS
