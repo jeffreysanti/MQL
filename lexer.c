@@ -192,19 +192,25 @@ int isInputComplete(Token *tk){
 	return 1;
 }
 
-void freeToken(Token *tk){
-	if(tk->next != NULL)
-		freeToken(tk->next);
+void freeTokenData(Token *tk){
 	if(tk->type == TT_DEFINE && tk->s != NULL){
 		TokenDefine *td = (TokenDefine *)tk->s;
 		free(td->s);
-		td->s = NULL;
-	}
-	if(tk->type == TT_CODEBLOCK && tk->s != NULL){
-		tk->s = NULL; // it's just a number
-	}
-	if(tk->s != NULL)
 		free(tk->s);
+	}else if(tk->type == TT_CODEBLOCK && tk->s != NULL){
+		// just a number nothing to free
+	}else if(tk->type == TT_STACKDATA){
+		stackPopAll((Stack*)tk->s);
+	}else if(tk->s != NULL){
+		free(tk->s);
+	}
+	tk->s = NULL;
+}
+
+void freeToken(Token *tk){
+	if(tk->next != NULL)
+		freeToken(tk->next);
+	freeTokenData(tk);
 	free(tk);
 }
 
@@ -216,10 +222,20 @@ Token *duplicateToken(Token *tk){
 	if(tk->s != NULL){
 		if(tk->type == TT_CODEBLOCK){
 			ret->s = tk->s;
+		}else if(tk->type == TT_STACKDATA){
+			ret->s = stackDup((Stack*)tk->s);
 		}else{
 			ret->s = dup(tk->s);
 		}
 	}
+	return ret;
+}
+
+Token *newStackDataToken(Stack *stack){
+	Token *ret = malloc(sizeof(Token));
+	ret->type = TT_STACKDATA;
+	ret->next = NULL;
+	ret->s = stack;
 	return ret;
 }
 

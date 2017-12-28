@@ -26,7 +26,9 @@ void mql_op(State *s);
 Token *tokenize(const char *s);
 int isInputComplete(Token *tk);
 void freeToken(Token *tk);
+void freeTokenData(Token *tk);
 Token *duplicateToken(Token *tk);
+Token *newStackDataToken(Stack *stack);
 
 // METHODS
 MethodList *newMethodList();
@@ -45,6 +47,7 @@ SymbolTable *newSymbolTable();
 void freeSymbolTable(SymbolTable **st);
 void addSymbol(SymbolTable **st, char *s, Element *elm);
 Token *codeBlockExecToken(int cbid);
+Token *unpackCodeBlock(int cbid);
 
 
 // STACK
@@ -52,6 +55,8 @@ Stack *newStack();
 Stack *stackPush(Stack *s, Element *elm);
 Element *stackPoll(Stack *s);
 Stack *stackPop(Stack *s);
+Stack *stackDup(Stack *s);
+Token *mqlProc_StackData(State *s, Token *tk);
 Stack *stackPopAll(Stack *s);
 Element *popStackOrErr(State *state);
 Stack *stackPopNoFree(Stack *s);

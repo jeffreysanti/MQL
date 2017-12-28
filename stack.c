@@ -64,6 +64,50 @@ unsigned int stackSize(Stack *s){
 	return ss;
 }
 
+Stack *stackDup(Stack *s){
+	if(s == NULL){
+		return NULL;
+	}
+
+	Stack *tmp = newStack();
+	Stack *ret = newStack();
+	while(s != NULL){
+		tmp = stackPush(tmp, dupElement(s->elm));
+		s = s->next;
+	}
+	s = tmp;
+	while(s != NULL){
+		ret = stackPush(tmp, tmp->elm);
+		s = s->next;
+	}
+	while(tmp != NULL){
+		tmp = stackPopNoFree(tmp);
+	}
+	return ret;
+}
+
+// copy all elements from token onto stack
+Token *mqlProc_StackData(State *state, Token *tk){
+	Stack *stack = (Stack*)tk->s;
+	
+	Stack *tmp = newStack();
+	Stack *s = stack;
+	while(s != NULL){
+		tmp = stackPush(tmp, dupElement(s->elm));
+		s = s->next;
+	}
+	s = tmp;
+	while(s != NULL){
+		state->stack = stackPush(state->stack, tmp->elm);
+		s = s->next;
+	}
+	while(tmp != NULL){
+		tmp = stackPopNoFree(tmp);
+	}
+
+	return tk->next;
+}
+
 void stackReferenced(Stack *s){
 	s->bRef = 1;
 }

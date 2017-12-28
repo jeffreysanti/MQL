@@ -93,6 +93,14 @@ Token *codeBlockExecToken(int cbid){
 	return cb.start;
 }
 
+// returns the token and destroys the codeblock
+Token *unpackCodeBlock(int cbid){
+	CodeBlock cb = M[cbid];
+	Token *ret = cb.start;
+	M[cbid].start = NULL;
+	return ret;
+}
+
 Element *findSymbol(SymbolTable *st, char *s){
 	SymbolTable *ent = NULL;
 	
@@ -387,6 +395,8 @@ void dumpSource(Token *tk, int level){
 			printf("\"%s\"", tk->s);
 		}else if(tk->type == TT_DEFINE){
 			printf(":", tk->s);
+		}else if(tk->type == TT_STACKDATA){
+			printf("-/STACKDATA/-");
 		}else{
 			printf("%s", tk->s);
 		}
@@ -404,7 +414,7 @@ Token* opSrc(State* s, Token* tk){
 
 	Token *exec = NULL;
 	if(stackPoll(s->stack) != NULL){
-		exec = findMethod(stackPoll(s->stack), tk->s);
+		exec = findMethod(stackPoll(s->stack)->methods, tk->s);
 	}
 
 	if(exec == NULL){

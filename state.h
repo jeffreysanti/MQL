@@ -19,7 +19,9 @@ typedef enum {
 	TT_STRING,
 	TT_CODEBLOCK,
 	
-	TT_DEFINE
+	TT_DEFINE,
+
+	TT_STACKDATA
 } TokenType;
 
 /*

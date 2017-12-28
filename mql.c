@@ -132,6 +132,8 @@ void mqlCodeBlock(State *s){
 		s->tk = mqlProc_Elm(s, s->tk);
 	}else if(s->tk->type == TT_DEFINE){
 		s->tk = mqlProc_Def(s, s->tk);
+	}else if(s->tk->type == TT_STACKDATA){
+		s->tk = mqlProc_StackData(s, s->tk);
 	}else{
 		mql_op(s);
 	}

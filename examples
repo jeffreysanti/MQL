@@ -41,6 +41,30 @@ five1 ->v
 # 1,1,1,1,1
 
 
+
+clr
+:manip { 2 %insert {'abc'} 'd' 'e' 'f' 'g' 'h' 'i' + + + + + + }
+# defabcghi
+src manip
+# After executing manip at least once:
+# { 2.000000 %insert nop "d" "e" "f" "abc" nop "g" "h" "i" + + + + + + nop } 
+# For reference, before:
+src manip
+#{ 2.000000 %insert 
+#  { "abc" nop } 
+# "d" "e" "f" "g" "h" "i" + + + + + + nop }
+
+clr
+:forinject { [1,2,3,4,5,6,7,8] ->b 0 1 insertt { . 0} for {dup mod 2 if { } else { }  } }
+
+clr
+:manipx { 2 %insertx {5 7 +} 'd' 'e' 'f' 'g' 'h' 'i' + + + + + + }
+#'def12.000000ghi'
+src manipx
+# { 2.000000 %insertx nop "d" "e" "f" -/STACKDATA/- "g" "h" "i" + + + + + + nop }
+
+
+
 clr
 # Usage N repeat M => M,M,M, ... M (N times)
 :repeat { 5 3 %inserttx {1 %afterr}  buffer { dup 1 = if {. .} else {1 - 1    nop } } 1 %skip}
