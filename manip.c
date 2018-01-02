@@ -142,6 +142,7 @@ Token *manipInsert(State *s, Token *tk, int order, char exec){
 		if(op1 == NULL || op1->type != ET_NUMBER){
 			s->invalid = 1;
 			s->errStr = dup("%insert requires numeric indicies on the stack");
+			printf("Insert Failed: i= %d\n", i);
 			return tk;
 		}
 		idxs[i] = (int)op1->dval;
@@ -151,8 +152,11 @@ Token *manipInsert(State *s, Token *tk, int order, char exec){
 	if(tk == NULL){
 		s->invalid = 1;
 		s->errStr = dup("%insert failed because a code block for insertion did not follow it");
+		printf("TK IS NULL\n");
 		return tk;
 	}
+
+	printf("Insert Okay: Order %d\n", order);
 
 	Token *tkCont = tk->next;
 
